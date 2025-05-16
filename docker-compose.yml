@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  rknn-infer:
+    build: .
+    container_name: orangepi_rknn_runner
+    volumes:
+      - .:/app
+    devices:
+      - "/dev:/dev"  # доступ к устройствам NPU
+    tty: true
+    stdin_open: true
+    environment:
+      - DISPLAY=${DISPLAY}
+    working_dir: /app
+    entrypoint: ["python", "main.py"]
