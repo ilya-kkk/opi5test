@@ -2,7 +2,6 @@ import os
 import time
 import cv2
 import numpy as np
-import torch
 from roboflow import Roboflow
 from dotenv import load_dotenv
 from sklearn.model_selection import train_test_split
@@ -16,8 +15,7 @@ ROBOFLOW_WORKSPACE = os.getenv("ROBOFLOW_WORKSPACE")
 ROBOFLOW_PROJECT = os.getenv("ROBOFLOW_PROJECT")
 ROBOFLOW_VERSION = int(os.getenv("ROBOFLOW_VERSION"))
 
-PT_MODEL = 'v10nfull.pt'
-ONNX_MODEL = 'model.onnx'
+ONNX_MODEL = 'v10nint8256.onnx'  # Указываем заранее сконвертированную модель
 INPUT_SIZE = (640, 640)
 TARGET_PLATFORM = 'rk3588'
 QUANT_TYPES = ['fp16', 'int8']
@@ -54,17 +52,7 @@ def download_and_split_dataset():
 
     print(f'[INFO] Сплит завершён. Train: {len(train_set)}, Valid: {len(valid_set)}')
 
-# === 1. .pt → ONNX ===
-def convert_pt_to_onnx(pt_model, onnx_output):
-    model = torch.load(pt_model, map_location=torch.device('cpu'))
-    model.eval()
-    dummy_input = torch.randn(1, 3, *INPUT_SIZE)
-    torch.onnx.export(model, dummy_input, onnx_output,
-                      input_names=['input'], output_names=['output'],
-                      opset_version=11)
-    print(f'[INFO] ONNX сохранён: {onnx_output}')
-
-# === 2. ONNX → RKNN ===
+# === 1. ONNX → RKNN ===
 def convert_onnx_to_rknn_lite(onnx_path, out_path, quant_type):
     rknn = RKNNLite()
     rknn.config(target_platform=TARGET_PLATFORM)
@@ -79,7 +67,7 @@ def convert_onnx_to_rknn_lite(onnx_path, out_path, quant_type):
     rknn.export_rknn(out_path)
     rknn.release()
 
-# === 3. Инференс + время + точность ===
+# === 2. Инференс + время + точность ===
 def evaluate_model(rknn_path):
     rknn = RKNNLite()
     rknn.load_rknn(rknn_path)
@@ -115,7 +103,7 @@ def evaluate_model(rknn_path):
     avg_time = (total_time / total) * 1000
     return avg_time, acc
 
-# === 4. Получение label из имени файла ===
+# === 3. Получение label из имени файла ===
 def extract_label_from_filename(path):
     filename = os.path.basename(path)
     for part in filename.split('_'):
@@ -126,10 +114,6 @@ def extract_label_from_filename(path):
 # === Главный код ===
 if __name__ == '__main__':
     download_and_split_dataset()
-    convert_pt_to_onnx(PT_MODEL, ONNX_MODEL)
-
-    base_model_path = 'model_fp16.rknn'
-    convert_onnx_to_rknn_lite(ONNX_MODEL, base_model_path, 'fp16')
 
     quant_model_paths = []
     for quant in QUANT_TYPES:
@@ -138,7 +122,6 @@ if __name__ == '__main__':
         quant_model_paths.append(path)
 
     print('\n[RESULTS]')
-    models_to_test = [('fp16 (base)', base_model_path)] + list(zip(QUANT_TYPES, quant_model_paths))
-    for label, path in models_to_test:
+    for label, path in zip(QUANT_TYPES, quant_model_paths):
         time_ms, acc = evaluate_model(path)
         print(f'{label}: {time_ms:.2f} ms | Accuracy: {acc:.2f}%')
