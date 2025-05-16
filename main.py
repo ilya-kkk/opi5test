@@ -5,7 +5,9 @@ import numpy as np
 from roboflow import Roboflow
 from dotenv import load_dotenv
 from sklearn.model_selection import train_test_split
-from rknnlite.api import RKNNLite  # ВАЖНО: используем LITE версию
+from rknn.api import RKNN
+from rknnlite.api import RKNNLite
+
 
 # === Настройки ===
 load_dotenv()
@@ -53,8 +55,8 @@ def download_and_split_dataset():
     print(f'[INFO] Сплит завершён. Train: {len(train_set)}, Valid: {len(valid_set)}')
 
 # === 1. ONNX → RKNN ===
-def convert_onnx_to_rknn_lite(onnx_path, out_path, quant_type):
-    rknn = RKNNLite()
+def convert_onnx_to_rknn(onnx_path, out_path, quant_type):
+    rknn = RKNN()
     rknn.config(target_platform=TARGET_PLATFORM)
 
     print(f'[INFO] Загружаем модель: {onnx_path}')
@@ -66,6 +68,7 @@ def convert_onnx_to_rknn_lite(onnx_path, out_path, quant_type):
     print(f'[INFO] Сохраняем RKNN: {out_path}')
     rknn.export_rknn(out_path)
     rknn.release()
+
 
 # === 2. Инференс + время + точность ===
 def evaluate_model(rknn_path):
@@ -118,7 +121,7 @@ if __name__ == '__main__':
     quant_model_paths = []
     for quant in QUANT_TYPES:
         path = f'model_{quant}.rknn'
-        convert_onnx_to_rknn_lite(ONNX_MODEL, path, quant)
+        convert_onnx_to_rknn(ONNX_MODEL, path, quant)
         quant_model_paths.append(path)
 
     print('\n[RESULTS]')
