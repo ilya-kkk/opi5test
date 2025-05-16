@@ -18,7 +18,7 @@ ROBOFLOW_VERSION = int(os.getenv("ROBOFLOW_VERSION"))
 
 PT_MODEL = 'v10nfull.pt'
 ONNX_MODEL = 'model.onnx'
-INPUT_SIZE = (640, 480)
+INPUT_SIZE = (640, 640)
 TARGET_PLATFORM = 'rk3588'
 QUANT_TYPES = ['fp16', 'int8']
 
@@ -31,7 +31,7 @@ def download_and_split_dataset():
     print('[INFO] Загружаем датасет с Roboflow...')
     rf = Roboflow(api_key=ROBOFLOW_API_KEY)
     project = rf.workspace(ROBOFLOW_WORKSPACE).project(ROBOFLOW_PROJECT)
-    dataset = project.version(ROBOFLOW_VERSION).download("folder")
+    dataset = project.version(ROBOFLOW_VERSION).download("yolov5")
 
     os.makedirs(DATASET_DIR, exist_ok=True)
 
