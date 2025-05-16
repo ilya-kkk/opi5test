@@ -1,27 +1,25 @@
-FROM python:3.9-slim
+FROM arm64v8/python:3.8-slim
 
-# Обновление и зависимости системы
+WORKDIR /app
+
+# Установка системных зависимостей
 RUN apt-get update && apt-get install -y \
-    libgl1-mesa-glx \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender1 \
     git \
-    wget \
-    unzip \
+    cmake \
+    build-essential \
+    libssl-dev \
+    libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Копирование файлов
+COPY requirements.txt /tmp/
+COPY rknn_toolkit2-1.4.0-cp38-cp38-linux_aarch64.whl /tmp/
+
 # Установка pip-зависимостей
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --upgrade pip
+RUN pip install --no-cache-dir /tmp/rknn_toolkit2-1.4.0-cp38-cp38-linux_aarch64.whl
+RUN pip install --no-cache-dir -r /tmp/requirements.txt
 
-# Копируем проект
-WORKDIR /app
-COPY . .
+# Копируем всё остальное
+COPY . /app
 
-# Установка прав доступа (если нужно использовать устройства)
-RUN chmod -R 777 /app
-
-# Точка входа по умолчанию
-CMD ["python", "main.py"]
