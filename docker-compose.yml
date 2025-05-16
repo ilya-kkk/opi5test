@@ -6,11 +6,13 @@ services:
     container_name: orangepi_rknn_runner
     volumes:
       - .:/app
+    working_dir: /app
     devices:
       - "/dev:/dev"  # доступ к устройствам NPU
     tty: true
     stdin_open: true
     environment:
       - DISPLAY=${DISPLAY}
-    working_dir: /app
-    entrypoint: ["python", "main.py"]
+      - PYTHONUNBUFFERED=1
+    env_file:
+      - .env

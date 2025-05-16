@@ -1,5 +1,7 @@
-torch==1.12.0
-onnx==1.12.0
+python-dotenv
+roboflow
+scikit-learn
+rknn-toolkit2
 numpy
+torch
 opencv-python
-rknn-toolkit2==1.4.0
