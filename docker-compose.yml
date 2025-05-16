@@ -5,7 +5,10 @@ services:
     volumes:
       - .:/app
     devices:
-      - "/dev:/dev"  # Доступ к устройствам NPU
+      - /dev/rknpu0
+      - /dev/dri
+      - /dev/rga
+    privileged: true
     tty: true
     stdin_open: true
     environment:
