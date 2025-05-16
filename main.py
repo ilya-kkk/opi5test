@@ -100,7 +100,7 @@ def evaluate_model(rknn_path):
         total_time += elapsed
 
         pred = np.argmax(outputs)
-        label = extract_label_from_filename(path)  # 👇 ниже определим
+        label = extract_label_from_filename(path) 
 
         if pred == label:
             correct += 1
