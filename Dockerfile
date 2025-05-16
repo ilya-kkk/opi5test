@@ -1,4 +1,4 @@
-FROM arm64v8/python:3.8-slim
+FROM arm64v8/python:3.11-slim
 
 WORKDIR /app
 
@@ -9,17 +9,26 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     libssl-dev \
     libffi-dev \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    libsm6 \
+    libxext6 \
+    libxrender-dev \
+    wget \
+    unzip \
     && rm -rf /var/lib/apt/lists/*
 
-# Копирование файлов
+# Копируем зависимости и .whl
 COPY requirements.txt /tmp/
-COPY rknn_toolkit2-1.4.0-cp38-cp38-linux_aarch64.whl /tmp/
+COPY rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl /tmp/
 
-# Установка pip-зависимостей
-RUN pip install --upgrade pip
-RUN pip install --no-cache-dir /tmp/rknn_toolkit2-1.4.0-cp38-cp38-linux_aarch64.whl
-RUN pip install --no-cache-dir -r /tmp/requirements.txt
+# Установка зависимостей
+RUN pip install --no-cache-dir --upgrade pip \
+    && pip install --no-cache-dir -r /tmp/requirements.txt \
+    && pip install --no-cache-dir /tmp/rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl
 
-# Копируем всё остальное
-COPY . /app
+# Копируем проект
+COPY . .
 
+# Точка входа (если есть main.py)
+CMD ["python", "main.py"]

@@ -1,18 +1,12 @@
-version: '3.8'
-
 services:
   rknn-infer:
     build: .
     container_name: orangepi_rknn_runner
     volumes:
       - .:/app
-    working_dir: /app
     devices:
-      - "/dev:/dev"  # доступ к устройствам NPU
+      - "/dev:/dev"  # Доступ к устройствам NPU
     tty: true
     stdin_open: true
     environment:
       - DISPLAY=${DISPLAY}
-      - PYTHONUNBUFFERED=1
-    env_file:
-      - .env
