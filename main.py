@@ -3,10 +3,10 @@ import time
 import cv2
 import numpy as np
 import torch
-from rknn.api import RKNN
 from roboflow import Roboflow
 from dotenv import load_dotenv
 from sklearn.model_selection import train_test_split
+from rknnlite.api import RKNNLite  # ВАЖНО: используем LITE версию
 
 # === Настройки ===
 load_dotenv()
@@ -20,7 +20,7 @@ PT_MODEL = 'v10nfull.pt'
 ONNX_MODEL = 'model.onnx'
 INPUT_SIZE = (640, 480)
 TARGET_PLATFORM = 'rk3588'
-QUANT_TYPES = ['fp16', 'int8', 'int4']
+QUANT_TYPES = ['fp16', 'int8']
 
 DATASET_DIR = 'calib_images'
 TRAIN_TXT = 'dataset_train.txt'
@@ -56,30 +56,34 @@ def download_and_split_dataset():
 
 # === 1. .pt → ONNX ===
 def convert_pt_to_onnx(pt_model, onnx_output):
-    model = torch.load(pt_model)
+    model = torch.load(pt_model, map_location=torch.device('cpu'))
     model.eval()
     dummy_input = torch.randn(1, 3, *INPUT_SIZE)
-    torch.onnx.export(model, dummy_input, onnx_output, input_names=['input'], output_names=['output'], opset_version=11)
+    torch.onnx.export(model, dummy_input, onnx_output,
+                      input_names=['input'], output_names=['output'],
+                      opset_version=11)
     print(f'[INFO] ONNX сохранён: {onnx_output}')
 
 # === 2. ONNX → RKNN ===
-def convert_onnx_to_rknn(onnx_path, out_path, quant_type):
-    rknn = RKNN()
-    rknn.config(target_platform=TARGET_PLATFORM,
-                quantize_input=(quant_type != 'fp16'),
-                quantized_dtype=quant_type if quant_type != 'fp16' else None)
+def convert_onnx_to_rknn_lite(onnx_path, out_path, quant_type):
+    rknn = RKNNLite()
+    rknn.config(target_platform=TARGET_PLATFORM)
+
+    print(f'[INFO] Загружаем модель: {onnx_path}')
     rknn.load_onnx(model=onnx_path)
-    rknn.build(do_quantization=(quant_type != 'fp16'),
-               dataset=TRAIN_TXT)
+
+    print(f'[INFO] Строим модель с квантизацией: {quant_type}')
+    rknn.build(do_quantization=(quant_type != 'fp16'), dataset=TRAIN_TXT)
+
+    print(f'[INFO] Сохраняем RKNN: {out_path}')
     rknn.export_rknn(out_path)
     rknn.release()
-    print(f'[INFO] RKNN экспорт: {quant_type} → {out_path}')
 
 # === 3. Инференс + время + точность ===
 def evaluate_model(rknn_path):
-    rknn = RKNN()
+    rknn = RKNNLite()
     rknn.load_rknn(rknn_path)
-    rknn.init_runtime(target='rk3588')
+    rknn.init_runtime()
 
     with open(VALID_TXT) as f:
         val_paths = [line.strip() for line in f.readlines()]
@@ -88,7 +92,7 @@ def evaluate_model(rknn_path):
     correct = 0
     total = 0
 
-    for path in val_paths[:50]:  # ограничим до 50 примеров для скорости
+    for path in val_paths[:50]:
         img = cv2.imread(path)
         img = cv2.resize(img, INPUT_SIZE)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
@@ -100,7 +104,7 @@ def evaluate_model(rknn_path):
         total_time += elapsed
 
         pred = np.argmax(outputs)
-        label = extract_label_from_filename(path) 
+        label = extract_label_from_filename(path)
 
         if pred == label:
             correct += 1
@@ -111,27 +115,26 @@ def evaluate_model(rknn_path):
     avg_time = (total_time / total) * 1000
     return avg_time, acc
 
-# === 4. Поддержка label из имени файла ===
+# === 4. Получение label из имени файла ===
 def extract_label_from_filename(path):
-    # Пример: path = '.../dog_3.jpg' → label = 3
     filename = os.path.basename(path)
     for part in filename.split('_'):
         if part.split('.')[0].isdigit():
             return int(part.split('.')[0])
-    return 0  # fallback
+    return 0
 
 # === Главный код ===
 if __name__ == '__main__':
     download_and_split_dataset()
     convert_pt_to_onnx(PT_MODEL, ONNX_MODEL)
 
-    base_model_path = 'model_base.rknn'
-    convert_onnx_to_rknn(ONNX_MODEL, base_model_path, 'fp16')
+    base_model_path = 'model_fp16.rknn'
+    convert_onnx_to_rknn_lite(ONNX_MODEL, base_model_path, 'fp16')
 
     quant_model_paths = []
     for quant in QUANT_TYPES:
         path = f'model_{quant}.rknn'
-        convert_onnx_to_rknn(ONNX_MODEL, path, quant)
+        convert_onnx_to_rknn_lite(ONNX_MODEL, path, quant)
         quant_model_paths.append(path)
 
     print('\n[RESULTS]')
