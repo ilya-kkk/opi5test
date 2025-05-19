@@ -6,7 +6,6 @@ from roboflow import Roboflow
 from dotenv import load_dotenv
 from sklearn.model_selection import train_test_split
 from rknn.api import RKNN
-from rknnlite.api import RKNNLite
 
 
 # === Настройки ===
