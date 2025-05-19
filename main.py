@@ -76,34 +76,31 @@ def evaluate_model(rknn_path):
     rknn.load_rknn(rknn_path)
     rknn.init_runtime()
 
+    # Список валидационных изображений
     with open(VALID_TXT) as f:
-        val_paths = [line.strip() for line in f.readlines()]
+        val_paths = [p.strip() for p in f if p.strip()]
 
-    total_time = 0
-    correct = 0
-    total = 0
+    total_time = correct = total = 0
 
     for path in val_paths[:50]:
         img = cv2.imread(path)
         img = cv2.resize(img, INPUT_SIZE)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
-        img = img.astype(np.uint8)
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB).astype(np.uint8)
 
         start = time.time()
         outputs = rknn.inference(inputs=[img])[0]
-        elapsed = time.time() - start
-        total_time += elapsed
+        total_time += time.time() - start
 
-        pred = np.argmax(outputs)
+        pred  = int(np.argmax(outputs))
         label = extract_label_from_filename(path)
-
         if pred == label:
             correct += 1
         total += 1
 
     rknn.release()
-    acc = correct / total * 100
-    avg_time = (total_time / total) * 1000
+
+    acc      = correct / total * 100
+    avg_time = (total_time / total) * 1000  # в мс
     return avg_time, acc
 
 # === 3. Получение label из имени файла ===

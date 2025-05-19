@@ -1,11 +1,10 @@
-FROM arm64v8/python:3.11-slim
+FROM arm64v8/python:3.11-slim  
 
 WORKDIR /app
 
-# Установка системных зависимостей
 RUN apt-get update && apt-get install -y \
-    git \
-    cmake \
+    git \               
+    cmake \              
     build-essential \
     libssl-dev \
     libffi-dev \
@@ -15,20 +14,16 @@ RUN apt-get update && apt-get install -y \
     libxext6 \
     libxrender-dev \
     wget \
-    unzip \
-    && rm -rf /var/lib/apt/lists/*
+    unzip && \
+    rm -rf /var/lib/apt/lists/*
 
-# Копируем зависимости и .whl
 COPY requirements.txt /tmp/
-COPY rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl /tmp/
 
-# Установка зависимостей
-RUN pip install --no-cache-dir --upgrade pip \
-    && pip install --no-cache-dir -r /tmp/requirements.txt \
-    && pip install --no-cache-dir /tmp/rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r /tmp/requirements.txt  
 
-# Копируем проект
-COPY . .
+RUN pip install rknn-toolkit2
 
-# Точка входа (если есть main.py)
-CMD ["python", "main.py"]
+COPY . /app
+
+
