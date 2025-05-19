@@ -73,7 +73,12 @@ def convert_onnx_to_rknn(onnx_path, out_path, quant_type):
 def evaluate_model(rknn_path):
     rknn = RKNN()
     rknn.load_rknn(rknn_path)
-    rknn.init_runtime()
+    
+    # Initialize runtime with target platform
+    ret = rknn.init_runtime(target=TARGET_PLATFORM)
+    if ret != 0:
+        print(f'[ERROR] Init runtime environment failed: {ret}')
+        return 0, 0
 
     # Список валидационных изображений
     with open(VALID_TXT) as f:
@@ -83,11 +88,20 @@ def evaluate_model(rknn_path):
 
     for path in val_paths[:50]:
         img = cv2.imread(path)
+        if img is None:
+            print(f'[WARNING] Could not read image: {path}')
+            continue
+            
         img = cv2.resize(img, INPUT_SIZE)
         img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB).astype(np.uint8)
 
         start = time.time()
-        outputs = rknn.inference(inputs=[img])[0]
+        outputs = rknn.inference(inputs=[img])
+        if outputs is None:
+            print(f'[WARNING] Inference failed for image: {path}')
+            continue
+            
+        outputs = outputs[0]
         total_time += time.time() - start
 
         pred  = int(np.argmax(outputs))
@@ -98,6 +112,9 @@ def evaluate_model(rknn_path):
 
     rknn.release()
 
+    if total == 0:
+        return 0, 0
+        
     acc      = correct / total * 100
     avg_time = (total_time / total) * 1000  # в мс
     return avg_time, acc
