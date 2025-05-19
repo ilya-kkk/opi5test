@@ -72,7 +72,7 @@ def convert_onnx_to_rknn(onnx_path, out_path, quant_type):
 
 # === 2. Инференс + время + точность ===
 def evaluate_model(rknn_path):
-    rknn = RKNNLite()
+    rknn = RKNN()
     rknn.load_rknn(rknn_path)
     rknn.init_runtime()
 
