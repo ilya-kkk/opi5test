@@ -24,8 +24,8 @@ RUN apt-get update && \
     rm -rf /var/cache/apt/*
 
 # Install RKNN Runtime
-RUN wget --no-check-certificate https://github.com/rockchip-linux/rknn-toolkit2/releases/download/v1.5.0/rknn-toolkit2-1.5.0-cp311-cp311-linux_aarch64.whl -O rknn-toolkit2.whl && \
-    wget --no-check-certificate https://github.com/rockchip-linux/rknn-toolkit2/releases/download/v1.5.0/rknn-toolkit-lite2-1.5.0-cp311-cp311-linux_aarch64.whl -O rknn-toolkit-lite2.whl && \
+RUN wget --no-check-certificate https://github.com/rockchip-linux/rknn-toolkit2/releases/download/v1.4.0/rknn-toolkit2-1.4.0-cp311-cp311-linux_aarch64.whl -O rknn-toolkit2.whl && \
+    wget --no-check-certificate https://github.com/rockchip-linux/rknn-toolkit2/releases/download/v1.4.0/rknn-toolkit-lite2-1.4.0-cp311-cp311-linux_aarch64.whl -O rknn-toolkit-lite2.whl && \
     pip install --no-cache-dir rknn-toolkit2.whl && \
     pip install --no-cache-dir rknn-toolkit-lite2.whl && \
     rm *.whl
