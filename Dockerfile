@@ -2,63 +2,39 @@ FROM arm64v8/python:3.11-slim
 
 WORKDIR /app
 
-# Increase apt space and add repositories
-RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90assumeyes && \
-    echo 'APT::Get::AllowUnauthenticated "true";' > /etc/apt/apt.conf.d/90allowunauth && \
-    echo 'APT::Get::Fix-Missing "true";' > /etc/apt/apt.conf.d/90fixmissing && \
-    echo "deb http://deb.debian.org/debian bullseye main" >> /etc/apt/sources.list && \
-    echo "deb http://deb.debian.org/debian bullseye-updates main" >> /etc/apt/sources.list
-
-# Install basic dependencies
+# Install system dependencies and clean up in one layer
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
     git \
     cmake \
     build-essential \
-    wget \
-    unzip && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /var/cache/apt/*
-
-# Install OpenCV dependencies
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
+    libssl-dev \
+    libffi-dev \
     libgl1-mesa-glx \
     libglib2.0-0 \
     libsm6 \
     libxext6 \
-    libxrender-dev && \
+    libxrender-dev \
+    wget \
+    unzip \
+    libopencv-dev \
+    python3-opencv && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /var/cache/apt/*
 
-# Install development libraries
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-    libssl-dev \
-    libffi-dev \
-    libprotobuf-dev \
-    protobuf-compiler \
-    libhdf5-dev \
-    libatlas-base-dev \
-    libgomp1 && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm -rf /var/cache/apt/*
-
-# Install OpenCV via pip instead of apt
-RUN pip install --no-cache-dir opencv-python-headless
+# Copy RKNN Toolkit wheel file
+COPY rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl /tmp/
 
 # Install RKNN Runtime
-RUN pip install --no-cache-dir rknn-toolkit2 && \
-    pip install --no-cache-dir rknn-toolkit-lite2
+RUN pip install --no-cache-dir /tmp/rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl && \
+    rm -rf /root/.cache/pip/*
 
-# Copy requirements first to leverage Docker cache
 COPY requirements.txt /app/
 
 # Install Python packages and clean up in one layer
 RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir rknn-toolkit2 && \
     pip install --no-cache-dir -r /app/requirements.txt && \
     rm -rf /root/.cache/pip/*
 
