@@ -24,11 +24,8 @@ RUN apt-get update && \
     rm -rf /var/cache/apt/*
 
 # Install RKNN Runtime
-RUN wget --no-check-certificate https://github.com/rockchip-linux/rknn-toolkit2/releases/download/v1.4.0/rknn-toolkit2-1.4.0-cp311-cp311-linux_aarch64.whl -O rknn-toolkit2.whl && \
-    wget --no-check-certificate https://github.com/rockchip-linux/rknn-toolkit2/releases/download/v1.4.0/rknn-toolkit-lite2-1.4.0-cp311-cp311-linux_aarch64.whl -O rknn-toolkit-lite2.whl && \
-    pip install --no-cache-dir rknn-toolkit2.whl && \
-    pip install --no-cache-dir rknn-toolkit-lite2.whl && \
-    rm *.whl
+RUN pip install --no-cache-dir rknn-toolkit2 && \
+    pip install --no-cache-dir rknn-toolkit-lite2 
 
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt /app/
