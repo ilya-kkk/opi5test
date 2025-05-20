@@ -9,6 +9,7 @@ services:
     volumes:
       - .:/app
       - /dev:/dev
+    working_dir: /app
     privileged: true
     environment:
       - PYTHONPATH=/app
