@@ -8,6 +8,10 @@ from tqdm import tqdm
 import pandas as pd
 from tabulate import tabulate
 
+# Конфигурация по умолчанию
+DEFAULT_IMAGE = os.getenv('TEST_IMAGE', 'images/img001.png')
+DEFAULT_RUNS = int(os.getenv('NUM_RUNS', '100'))
+
 def load_model(model_path):
     """Загрузка RKNN модели"""
     rknn = RKNN()
@@ -16,7 +20,9 @@ def load_model(model_path):
         print(f'[ERROR] Load RKNN model failed: {ret}')
         return None
 
-    ret = rknn.init_runtime(target='rk3588')
+    # Инициализация NPU
+    print('--> Init runtime environment')
+    ret = rknn.init_runtime(target='rk3588', device_id='npu0')
     if ret != 0:
         print(f'[ERROR] Init runtime environment failed: {ret}')
         return None
@@ -34,7 +40,7 @@ def preprocess_image(image_path, input_size=(640, 640)):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     return img.astype(np.uint8)
 
-def run_inference(model, image, num_runs=100):
+def run_inference(model, image, num_runs=DEFAULT_RUNS):
     """Запуск инференса и замер времени"""
     times = []
     
@@ -44,7 +50,7 @@ def run_inference(model, image, num_runs=100):
         model.inference(inputs=[image])
     
     # Замер времени
-    print("Running inference tests...")
+    print(f"Running inference tests ({num_runs} runs)...")
     for _ in tqdm(range(num_runs), desc="Running inference"):
         start = time.time()
         outputs = model.inference(inputs=[image])
@@ -53,7 +59,7 @@ def run_inference(model, image, num_runs=100):
     
     return times
 
-def test_model(model_path, image, num_runs=100):
+def test_model(model_path, image, num_runs=DEFAULT_RUNS):
     """Тестирование одной модели"""
     print(f'\n[INFO] Testing model: {os.path.basename(model_path)}')
     
@@ -80,9 +86,11 @@ def test_model(model_path, image, num_runs=100):
     return stats
 
 def main():
-    parser = argparse.ArgumentParser(description='RKNN Model Inference Test')
-    parser.add_argument('--image', type=str, required=True, help='Path to test image')
-    parser.add_argument('--runs', type=int, default=100, help='Number of inference runs')
+    parser = argparse.ArgumentParser(description='RKNN Model Inference Test on RK3588 NPU')
+    parser.add_argument('--image', type=str, default=DEFAULT_IMAGE, 
+                      help=f'Path to test image (default: {DEFAULT_IMAGE})')
+    parser.add_argument('--runs', type=int, default=DEFAULT_RUNS,
+                      help=f'Number of inference runs (default: {DEFAULT_RUNS})')
     args = parser.parse_args()
 
     # Список моделей для тестирования
