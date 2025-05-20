@@ -3,14 +3,14 @@ import time
 import cv2
 import numpy as np
 from rknn.api import RKNN
-import argparse
 from tqdm import tqdm
 import pandas as pd
 from tabulate import tabulate
 
-# Конфигурация по умолчанию
-DEFAULT_IMAGE = os.getenv('TEST_IMAGE', 'images/img001.png')
-DEFAULT_RUNS = int(os.getenv('NUM_RUNS', '100'))
+# Конфигурация
+TEST_IMAGE = '/app/img001.png'  # Путь к тестовому изображению
+NUM_RUNS = 100  # Количество прогонов для тестирования
+INPUT_SIZE = (640, 640)  # Размер входного изображения
 
 def load_model(model_path):
     """Загрузка RKNN модели"""
@@ -29,7 +29,7 @@ def load_model(model_path):
 
     return rknn
 
-def preprocess_image(image_path, input_size=(640, 640)):
+def preprocess_image(image_path, input_size=INPUT_SIZE):
     """Предобработка изображения"""
     img = cv2.imread(image_path)
     if img is None:
@@ -40,7 +40,7 @@ def preprocess_image(image_path, input_size=(640, 640)):
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     return img.astype(np.uint8)
 
-def run_inference(model, image, num_runs=DEFAULT_RUNS):
+def run_inference(model, image, num_runs=NUM_RUNS):
     """Запуск инференса и замер времени"""
     times = []
     
@@ -59,7 +59,7 @@ def run_inference(model, image, num_runs=DEFAULT_RUNS):
     
     return times
 
-def test_model(model_path, image, num_runs=DEFAULT_RUNS):
+def test_model(model_path, image, num_runs=NUM_RUNS):
     """Тестирование одной модели"""
     print(f'\n[INFO] Testing model: {os.path.basename(model_path)}')
     
@@ -86,13 +86,6 @@ def test_model(model_path, image, num_runs=DEFAULT_RUNS):
     return stats
 
 def main():
-    parser = argparse.ArgumentParser(description='RKNN Model Inference Test on RK3588 NPU')
-    parser.add_argument('--image', type=str, default=DEFAULT_IMAGE, 
-                      help=f'Path to test image (default: {DEFAULT_IMAGE})')
-    parser.add_argument('--runs', type=int, default=DEFAULT_RUNS,
-                      help=f'Number of inference runs (default: {DEFAULT_RUNS})')
-    args = parser.parse_args()
-
     # Список моделей для тестирования
     models = [
         'model_fp16.rknn',
@@ -101,8 +94,8 @@ def main():
     ]
 
     # Загрузка и предобработка изображения
-    print(f'[INFO] Loading image: {args.image}')
-    image = preprocess_image(args.image)
+    print(f'[INFO] Loading image: {TEST_IMAGE}')
+    image = preprocess_image(TEST_IMAGE)
     if image is None:
         return
 
@@ -113,7 +106,7 @@ def main():
             print(f'[WARNING] Model {model_path} not found, skipping...')
             continue
             
-        stats = test_model(model_path, image, args.runs)
+        stats = test_model(model_path, image, NUM_RUNS)
         if stats:
             results.append(stats)
 

@@ -14,11 +14,8 @@ services:
     environment:
       - PYTHONPATH=/app
       - LD_LIBRARY_PATH=/usr/lib
-      - TEST_IMAGE=/app/img001.png
-      - NUM_RUNS=100
     devices:
       - /dev/rknpu0
       - /dev/dri
       - /dev/rga
-    command: >
-      bash -c "python infer_test.py --image ${TEST_IMAGE} --runs ${NUM_RUNS}"
+    command: python infer_test.py
