@@ -37,7 +37,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 RUN pip install pandas tabulate
 
-RUN apt update && apt install rknpu2-rk3588
+# RUN apt update && apt install rknpu2-rk3588
 
 ENV LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH
 
