@@ -39,7 +39,6 @@ RUN pip install --no-cache-dir --upgrade pip && \
     rm -rf /root/.cache/pip/*
 
 RUN pip install pandas tabulate
-# Copy application code
-COPY . /app
+
 
 
