@@ -8,6 +8,7 @@ from sklearn.model_selection import train_test_split
 from rknn.api import RKNN
 import ctypes
 import sys
+import glob
 
 
 # === Настройки ===
@@ -27,15 +28,6 @@ DATASET_DIR = 'calib_images'
 TRAIN_TXT = 'dataset_train.txt'
 VALID_TXT = 'dataset_valid.txt'
 
-def check_rknn_library():
-    """Проверка наличия библиотеки RKNN Runtime"""
-    try:
-        ctypes.CDLL('librknnrt.so')
-        return True
-    except OSError:
-        print("[ERROR] RKNN Runtime library (librknnrt.so) not found!")
-        print("[INFO] Please make sure RKNN Runtime is properly installed")
-        return False
 
 # === 0. Roboflow загрузка и сплит ===
 def download_and_split_dataset():
@@ -67,6 +59,9 @@ def download_and_split_dataset():
 
 # === 1. ONNX → RKNN ===
 def convert_onnx_to_rknn(onnx_path, out_path, quant_type):
+    if not check_rknn_library():
+        return False
+        
     try:
         rknn = RKNN()
         rknn.config(target_platform=TARGET_PLATFORM)
