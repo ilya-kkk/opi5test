@@ -19,7 +19,7 @@ ROBOFLOW_VERSION = int(os.getenv("ROBOFLOW_VERSION"))
 ONNX_MODEL = 'v10nint8256.onnx'  # Указываем заранее сконвертированную модель
 INPUT_SIZE = (640, 640)
 TARGET_PLATFORM = 'rk3588'
-QUANT_TYPES = ['fp16', 'int8']
+QUANT_TYPES = ['fp16', 'int8', 'int4']
 
 DATASET_DIR = 'calib_images'
 TRAIN_TXT = 'dataset_train.txt'
