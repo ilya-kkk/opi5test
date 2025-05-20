@@ -2,7 +2,7 @@ FROM arm64v8/python:3.11-slim
 
 WORKDIR /app
 
-# 1) Системные зависимости + NPU runtime
+# 1) Устанавливаем системные зависимости
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
       git \
@@ -18,19 +18,21 @@ RUN apt-get update && \
       wget \
       unzip \
       libopencv-dev \
-      python3-opencv \
-      # вот здесь ставим runtime для RK3588 NPU:
-      rknpu2-rk3588 \
-      python3-rknnlite2 && \
-    apt-get clean && \
-    rm -rf /var/lib/apt/lists/* /var/cache/apt/*
+      python3-opencv && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
-# 2) Копируем и устанавливаем RKNN Lite wheel
+# 2) Склонировать RKNN-Toolkit2 и скопировать librknnrt.so для RK3588
+RUN git clone --depth 1 https://github.com/rockchip-linux/rknn-toolkit2.git /tmp/rknn-toolkit2 && \
+    cp /tmp/rknn-toolkit2/runtime/RK3588/Linux/librknn_api/aarch64/librknnrt.so /usr/lib/ && \
+    ldconfig && \
+    rm -rf /tmp/rknn-toolkit2
+
+# 3) Устанавливаем RKNN‑Lite wheel (если нужен) и rknn-toolkit2 из PyPI
 COPY rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl /tmp/
 RUN pip install --no-cache-dir /tmp/rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl && \
     rm -rf /root/.cache/pip/*
 
-# 3) Устанавливаем основной rknn-toolkit2 и остальные зависимости
+# 4) Устанавливаем rknn-toolkit2 и остальные Python-зависимости
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir rknn-toolkit2 && \
@@ -38,11 +40,11 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir pandas tabulate && \
     rm -rf /root/.cache/pip/*
 
-# 4) Копируем ваш код
+# 5) Копируем код приложения
 COPY . /app
 
-# 5) Добавляем LD_LIBRARY_PATH на случай, если librknnrt.so ставится в нестандартную папку
-ENV LD_LIBRARY_PATH=/usr/lib:/usr/lib64:$LD_LIBRARY_PATH
+# 6) Обеспечиваем поиск библиотек в /usr/lib
+ENV LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH
 
-# 6) Точка входа
+# 7) Запускаем тестовый скрипт
 CMD ["python", "infer_test.py"]
