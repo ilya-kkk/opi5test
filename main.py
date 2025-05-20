@@ -59,9 +59,6 @@ def download_and_split_dataset():
 
 # === 1. ONNX → RKNN ===
 def convert_onnx_to_rknn(onnx_path, out_path, quant_type):
-    if not check_rknn_library():
-        return False
-        
     try:
         rknn = RKNN()
         rknn.config(target_platform=TARGET_PLATFORM)
@@ -92,9 +89,6 @@ def convert_onnx_to_rknn(onnx_path, out_path, quant_type):
 
 # === 2. Инференс + время + точность ===
 def evaluate_model(rknn_path):
-    if not check_rknn_library():
-        return 0, 0
-
     try:
         rknn = RKNN()
         ret = rknn.load_rknn(rknn_path)
@@ -160,9 +154,6 @@ def extract_label_from_filename(path):
 
 # === Главный код ===
 if __name__ == '__main__':
-    if not check_rknn_library():
-        sys.exit(1)
-
     download_and_split_dataset()
 
     quant_model_paths = []

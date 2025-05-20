@@ -13,4 +13,4 @@ services:
     stdin_open: true
     environment:
       - DISPLAY=${DISPLAY}
-    entrypoint: ["python3", "main.py"]
+    entrypoint: ["python3", "infer_test.py"]
