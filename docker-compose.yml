@@ -20,7 +20,7 @@ services:
       - /dev/dri
       - /dev/rga
     command: >
-      bash -c "python infer_test.py --image ${TEST_IMAGE} --runs ${NUM_RUNS}"
+      bash -c "python infer_test.py"
     deploy:
       resources:
         reservations:
