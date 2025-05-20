@@ -16,10 +16,19 @@ RUN apt-get update && \
     libxext6 \
     libxrender-dev \
     wget \
-    unzip && \
+    unzip \
+    libopencv-dev \
+    python3-opencv && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /var/cache/apt/*
+
+# Install RKNN Runtime
+RUN wget https://github.com/rockchip-linux/rknn-toolkit2/releases/download/v1.5.0/rknn-toolkit2-1.5.0-cp311-cp311-linux_aarch64.whl && \
+    wget https://github.com/rockchip-linux/rknn-toolkit2/releases/download/v1.5.0/rknn-toolkit-lite2-1.5.0-cp311-cp311-linux_aarch64.whl && \
+    pip install --no-cache-dir rknn-toolkit2-1.5.0-cp311-cp311-linux_aarch64.whl && \
+    pip install --no-cache-dir rknn-toolkit-lite2-1.5.0-cp311-cp311-linux_aarch64.whl && \
+    rm *.whl
 
 # Copy requirements first to leverage Docker cache
 COPY requirements.txt /app/
@@ -27,7 +36,6 @@ COPY requirements.txt /app/
 # Install Python packages and clean up in one layer
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir -r /app/requirements.txt && \
-    pip install --no-cache-dir rknn-toolkit2 && \
     rm -rf /root/.cache/pip/*
 
 # Copy application code
