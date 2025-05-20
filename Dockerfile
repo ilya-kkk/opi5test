@@ -24,11 +24,11 @@ RUN apt-get update && \
     rm -rf /var/cache/apt/*
 
 # Copy RKNN Toolkit wheel file
-COPY rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl /tmp/
+# COPY rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl /tmp/
 
 # Install RKNN Runtime
-RUN pip install --no-cache-dir /tmp/rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl && \
-    rm -rf /root/.cache/pip/*
+# RUN pip install --no-cache-dir /tmp/rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl && \
+#     rm -rf /root/.cache/pip/*
 
 COPY requirements.txt /app/
 
@@ -40,5 +40,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 
 RUN pip install pandas tabulate
 
-
+RUN apt update && apt install python3-rknnlite2 rknpu2-rk3588
+# В Dockerfile после копирования librknnrt.so
+ENV LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH
 
