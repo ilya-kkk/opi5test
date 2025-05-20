@@ -21,10 +21,3 @@ services:
       - /dev/rga
     command: >
       bash -c "python infer_test.py"
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: nvidia
-              count: all
-              capabilities: [gpu]
