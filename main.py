@@ -6,6 +6,8 @@ from roboflow import Roboflow
 from dotenv import load_dotenv
 from sklearn.model_selection import train_test_split
 from rknn.api import RKNN
+import ctypes
+import sys
 
 
 # === Настройки ===
@@ -19,11 +21,21 @@ ROBOFLOW_VERSION = int(os.getenv("ROBOFLOW_VERSION"))
 ONNX_MODEL = 'v10nint8256.onnx'  # Указываем заранее сконвертированную модель
 INPUT_SIZE = (640, 640)
 TARGET_PLATFORM = 'rk3588'
-QUANT_TYPES = ['fp16', 'int8', 'int4']
+QUANT_TYPES = ['fp16', 'int8']  # Убрал int4, так как он может не поддерживаться
 
 DATASET_DIR = 'calib_images'
 TRAIN_TXT = 'dataset_train.txt'
 VALID_TXT = 'dataset_valid.txt'
+
+def check_rknn_library():
+    """Проверка наличия библиотеки RKNN Runtime"""
+    try:
+        ctypes.CDLL('librknnrt.so')
+        return True
+    except OSError:
+        print("[ERROR] RKNN Runtime library (librknnrt.so) not found!")
+        print("[INFO] Please make sure RKNN Runtime is properly installed")
+        return False
 
 # === 0. Roboflow загрузка и сплит ===
 def download_and_split_dataset():
@@ -55,69 +67,93 @@ def download_and_split_dataset():
 
 # === 1. ONNX → RKNN ===
 def convert_onnx_to_rknn(onnx_path, out_path, quant_type):
-    rknn = RKNN()
-    rknn.config(target_platform=TARGET_PLATFORM)
+    try:
+        rknn = RKNN()
+        rknn.config(target_platform=TARGET_PLATFORM)
 
-    print(f'[INFO] Загружаем модель: {onnx_path}')
-    rknn.load_onnx(model=onnx_path)
+        print(f'[INFO] Загружаем модель: {onnx_path}')
+        ret = rknn.load_onnx(model=onnx_path)
+        if ret != 0:
+            print(f'[ERROR] Load ONNX model failed: {ret}')
+            return False
 
-    print(f'[INFO] Строим модель с квантизацией: {quant_type}')
-    rknn.build(do_quantization=(quant_type != 'fp16'), dataset=TRAIN_TXT)
+        print(f'[INFO] Строим модель с квантизацией: {quant_type}')
+        ret = rknn.build(do_quantization=(quant_type != 'fp16'), dataset=TRAIN_TXT)
+        if ret != 0:
+            print(f'[ERROR] Build model failed: {ret}')
+            return False
 
-    print(f'[INFO] Сохраняем RKNN: {out_path}')
-    rknn.export_rknn(out_path)
-    rknn.release()
+        print(f'[INFO] Сохраняем RKNN: {out_path}')
+        ret = rknn.export_rknn(out_path)
+        if ret != 0:
+            print(f'[ERROR] Export RKNN model failed: {ret}')
+            return False
 
+        rknn.release()
+        return True
+    except Exception as e:
+        print(f'[ERROR] Exception during model conversion: {str(e)}')
+        return False
 
 # === 2. Инференс + время + точность ===
 def evaluate_model(rknn_path):
-    rknn = RKNN()
-    rknn.load_rknn(rknn_path)
-    
-    # Initialize runtime with target platform
-    ret = rknn.init_runtime(target=TARGET_PLATFORM)
-    if ret != 0:
-        print(f'[ERROR] Init runtime environment failed: {ret}')
+    if not check_rknn_library():
         return 0, 0
 
-    # Список валидационных изображений
-    with open(VALID_TXT) as f:
-        val_paths = [p.strip() for p in f if p.strip()]
+    try:
+        rknn = RKNN()
+        ret = rknn.load_rknn(rknn_path)
+        if ret != 0:
+            print(f'[ERROR] Load RKNN model failed: {ret}')
+            return 0, 0
 
-    total_time = correct = total = 0
+        # Initialize runtime with target platform
+        ret = rknn.init_runtime(target=TARGET_PLATFORM)
+        if ret != 0:
+            print(f'[ERROR] Init runtime environment failed: {ret}')
+            return 0, 0
 
-    for path in val_paths[:50]:
-        img = cv2.imread(path)
-        if img is None:
-            print(f'[WARNING] Could not read image: {path}')
-            continue
-            
-        img = cv2.resize(img, INPUT_SIZE)
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB).astype(np.uint8)
+        # Список валидационных изображений
+        with open(VALID_TXT) as f:
+            val_paths = [p.strip() for p in f if p.strip()]
 
-        start = time.time()
-        outputs = rknn.inference(inputs=[img])
-        if outputs is None:
-            print(f'[WARNING] Inference failed for image: {path}')
-            continue
-            
-        outputs = outputs[0]
-        total_time += time.time() - start
+        total_time = correct = total = 0
 
-        pred  = int(np.argmax(outputs))
-        label = extract_label_from_filename(path)
-        if pred == label:
-            correct += 1
-        total += 1
+        for path in val_paths[:50]:
+            img = cv2.imread(path)
+            if img is None:
+                print(f'[WARNING] Could not read image: {path}')
+                continue
 
-    rknn.release()
+            img = cv2.resize(img, INPUT_SIZE)
+            img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB).astype(np.uint8)
 
-    if total == 0:
+            start = time.time()
+            outputs = rknn.inference(inputs=[img])
+            if outputs is None:
+                print(f'[WARNING] Inference failed for image: {path}')
+                continue
+
+            outputs = outputs[0]
+            total_time += time.time() - start
+
+            pred = int(np.argmax(outputs))
+            label = extract_label_from_filename(path)
+            if pred == label:
+                correct += 1
+            total += 1
+
+        rknn.release()
+
+        if total == 0:
+            return 0, 0
+
+        acc = correct / total * 100
+        avg_time = (total_time / total) * 1000  # в мс
+        return avg_time, acc
+    except Exception as e:
+        print(f'[ERROR] Exception during model evaluation: {str(e)}')
         return 0, 0
-        
-    acc      = correct / total * 100
-    avg_time = (total_time / total) * 1000  # в мс
-    return avg_time, acc
 
 # === 3. Получение label из имени файла ===
 def extract_label_from_filename(path):
@@ -129,13 +165,20 @@ def extract_label_from_filename(path):
 
 # === Главный код ===
 if __name__ == '__main__':
+    if not check_rknn_library():
+        sys.exit(1)
+
     download_and_split_dataset()
 
     quant_model_paths = []
     for quant in QUANT_TYPES:
         path = f'model_{quant}.rknn'
-        convert_onnx_to_rknn(ONNX_MODEL, path, quant)
-        quant_model_paths.append(path)
+        if convert_onnx_to_rknn(ONNX_MODEL, path, quant):
+            quant_model_paths.append(path)
+
+    if not quant_model_paths:
+        print('[ERROR] No models were successfully converted')
+        sys.exit(1)
 
     print('\n[RESULTS]')
     for label, path in zip(QUANT_TYPES, quant_model_paths):

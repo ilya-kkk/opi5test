@@ -18,7 +18,12 @@ RUN apt-get update && \
     wget \
     unzip \
     libopencv-dev \
-    python3-opencv && \
+    python3-opencv \
+    libprotobuf-dev \
+    protobuf-compiler \
+    libhdf5-dev \
+    libatlas-base-dev \
+    libgomp1 && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /var/cache/apt/*
