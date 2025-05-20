@@ -2,10 +2,12 @@ FROM arm64v8/python:3.11-slim
 
 WORKDIR /app
 
-# Increase apt space
+# Increase apt space and add repositories
 RUN echo 'APT::Get::Assume-Yes "true";' > /etc/apt/apt.conf.d/90assumeyes && \
     echo 'APT::Get::AllowUnauthenticated "true";' > /etc/apt/apt.conf.d/90allowunauth && \
-    echo 'APT::Get::Fix-Missing "true";' > /etc/apt/apt.conf.d/90fixmissing
+    echo 'APT::Get::Fix-Missing "true";' > /etc/apt/apt.conf.d/90fixmissing && \
+    echo "deb http://deb.debian.org/debian bullseye main" >> /etc/apt/sources.list && \
+    echo "deb http://deb.debian.org/debian bullseye-updates main" >> /etc/apt/sources.list
 
 # Install basic dependencies
 RUN apt-get update && \
@@ -22,8 +24,6 @@ RUN apt-get update && \
 # Install OpenCV dependencies
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
-    libopencv-dev \
-    python3-opencv \
     libgl1-mesa-glx \
     libglib2.0-0 \
     libsm6 \
@@ -46,6 +46,9 @@ RUN apt-get update && \
     apt-get clean && \
     rm -rf /var/lib/apt/lists/* && \
     rm -rf /var/cache/apt/*
+
+# Install OpenCV via pip instead of apt
+RUN pip install --no-cache-dir opencv-python-headless
 
 # Install RKNN Runtime
 RUN pip install --no-cache-dir rknn-toolkit2 && \
