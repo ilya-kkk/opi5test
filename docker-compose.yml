@@ -21,4 +21,4 @@ services:
       - /dev/dri
       - /dev/rga
     command: >
-      bash -c "python infer_test.py --image ${TEST_IMAGE}"
+      bash -c "python infer_test.py --image ${TEST_IMAGE} --runs ${NUM_RUNS}"
