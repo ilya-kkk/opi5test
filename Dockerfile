@@ -24,8 +24,9 @@ RUN apt-get update && \
 RUN apt-get update && \
     apt-get install -y --no-install-recommends git && \
     git clone --depth 1 https://github.com/rockchip-linux/rknn-toolkit2.git /tmp/rknn-toolkit2 && \
-    find /tmp/rknn-toolkit2 -name "librknnrt.so" -exec cp {} /usr/lib/ \; && \
-    chmod 755 /usr/lib/librknnrt.so && \
+    mkdir -p /usr/lib64 && \
+    find /tmp/rknn-toolkit2 -name "librknnrt.so" -exec cp {} /usr/lib64/ \; && \
+    chmod 755 /usr/lib64/librknnrt.so && \
     ldconfig && \
     rm -rf /tmp/rknn-toolkit2 && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
