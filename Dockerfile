@@ -47,7 +47,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 COPY . /app
 
 # 5) Обеспечиваем, что динамический загрузчик найдёт librknnrt.so
-ENV LD_LIBRARY_PATH=/usr/lib:$LD_LIBRARY_PATH
+ENV LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH
 
 # 6) Запуск инференс-скрипта
 CMD ["python", "infer_test.py"]
