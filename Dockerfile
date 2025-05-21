@@ -29,11 +29,11 @@ RUN curl -L --retry 3 --retry-delay 2 --retry-max-time 30 -o /usr/lib/librknnrt.
 # 3) Устанавливаем RKNN-Lite и основной RKNN-Toolkit2 + остальные Python‑зависимости
 COPY rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl /tmp/
 COPY requirements.txt /app/
-RUN pip install --no-cache-dir /tmp/rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl && \
-    pip install --no-cache-dir --upgrade pip && \
-    pip install --no-cache-dir rknn-toolkit2 && \
-    pip install --no-cache-dir -r /app/requirements.txt && \
-    pip install --no-cache-dir pandas tabulate && \
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir --verbose /tmp/rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl && \
+    pip install --no-cache-dir --verbose rknn-toolkit2 && \
+    pip install --no-cache-dir --verbose -r /app/requirements.txt && \
+    pip install --no-cache-dir --verbose pandas tabulate && \
     rm -rf /root/.cache/pip/*
 
 # 4) Копируем код приложения
