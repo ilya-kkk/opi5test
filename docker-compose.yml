@@ -18,4 +18,4 @@ services:
       - /dev/rknpu0
       - /dev/dri
       - /dev/rga
-    command: python infer_test.py
+    command: python convert.py
