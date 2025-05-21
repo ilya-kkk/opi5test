@@ -1,0 +1,14 @@
+version: '3'
+services:
+  rknn_runner:
+    build:
+      context: .
+      dockerfile: convert/Dockerfile
+    container_name: orangepi_rknn_runner
+    volumes:
+      - ./:/app
+    environment:
+      - ROBOFLOW_VERSION=1
+    ports:
+      - "8080:8080"
+    restart: unless-stopped 
