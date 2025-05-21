@@ -21,10 +21,14 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 2) Скачиваем конкретную библиотеку рантайма RKNN для RK3588
-RUN curl -L --retry 3 --retry-delay 2 --retry-max-time 30 -o /usr/lib/librknnrt.so \
-      https://raw.githubusercontent.com/rockchip-linux/rknn-toolkit2/master/runtime/RK3588/Linux/librknn_api/aarch64/librknnrt.so && \
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends git && \
+    git clone --depth 1 https://github.com/rockchip-linux/rknn-toolkit2.git /tmp/rknn-toolkit2 && \
+    find /tmp/rknn-toolkit2 -name "librknnrt.so" -exec cp {} /usr/lib/ \; && \
     chmod 755 /usr/lib/librknnrt.so && \
-    ldconfig
+    ldconfig && \
+    rm -rf /tmp/rknn-toolkit2 && \
+    apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 3) Устанавливаем RKNN-Lite и основной RKNN-Toolkit2 + остальные Python‑зависимости
 COPY rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl /tmp/
