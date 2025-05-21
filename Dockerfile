@@ -15,6 +15,7 @@ RUN apt-get update && \
       libxext6 \
       libxrender-dev \
       wget \
+      curl \
       libopencv-dev \
       python3-opencv && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
