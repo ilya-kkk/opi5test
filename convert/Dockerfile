@@ -19,7 +19,7 @@ RUN git clone --depth 1 https://github.com/rockchip-linux/rknpu2.git /tmp/rknpu2
     rm -rf /tmp/rknpu2
 
 # 3) Устанавливаем RKNN-Lite и основной RKNN-Toolkit2 + остальные Python‑зависимости
-COPY rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl /tmp/
+COPY ../rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl /tmp/
 COPY requirements.txt /app/
 RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir /tmp/rknn_toolkit_lite2-1.6.0-cp311-cp311-linux_aarch64.whl && \
