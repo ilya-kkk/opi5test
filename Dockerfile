@@ -20,7 +20,7 @@ RUN apt-get update && \
     apt-get clean && rm -rf /var/lib/apt/lists/*
 
 # 2) Скачиваем конкретную библиотеку рантайма RKNN для RK3588
-RUN wget --tries=3 --timeout=30 --retry-connrefused -qO /usr/lib/librknnrt.so \
+RUN curl -L --retry 3 --retry-delay 2 --retry-max-time 30 -o /usr/lib/librknnrt.so \
       https://raw.githubusercontent.com/rockchip-linux/rknn-toolkit2/master/runtime/RK3588/Linux/librknn_api/aarch64/librknnrt.so && \
     chmod 755 /usr/lib/librknnrt.so && \
     ldconfig
