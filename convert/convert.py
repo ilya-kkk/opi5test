@@ -43,6 +43,13 @@ class CIB(torch.nn.Module):
     def forward(self, x):
         return x
 
+class RepVGGDW(torch.nn.Module):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+    def forward(self, x):
+        return x
+
+setattr(block, 'RepVGGDW', RepVGGDW)
 setattr(block, 'SCDown', SCDown)
 setattr(block, 'PSA', PSA)
 setattr(block, 'Attention', Attention)
