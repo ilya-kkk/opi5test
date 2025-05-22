@@ -92,9 +92,9 @@ def export_pt_to_onnx_no_nms(pt_model, onnx_out):
         opset=11,
         dynamic=False,
         simplify=True,
-        include_postprocess=False,   # <–– отключаем NMS
         imgsz=INPUT_SIZE
     )
+
     # ulralytics по умолчанию сохранёт как model.onnx в cwd, переименуем:
     os.replace("model.onnx", onnx_out)
     print(f'[INFO] ONNX без NMS сохранён: {onnx_out}')
