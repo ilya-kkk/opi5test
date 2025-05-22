@@ -48,48 +48,46 @@ def download_and_split_dataset():
     with open(VALID_TXT,'w') as fv: fv.write('\n'.join(valid))
     print(f"[INFO] Split done. Train={len(train)} Valid={len(valid)}")
 
-# === 1. Конвертация ONNX → RKNN с квантованием ===
-# === 1. Конвертация ONNX → RKNN с квантованием ===
 def convert_onnx_to_rknn(onnx_path, rknn_path, quant):
     print(f"[INFO] Converting {onnx_path} → {quant}")
     rknn = RKNN()
 
-    # Поддерживаемые параметры для RK3588
-    #   • fp16: без квантования весов, но с понижением precision -> float16
-    #   • int8: квантование весов в w8a8
-    #   • int4: квантование весов в w4a16
+    # Выбираем правильные настройки под RK3588
     if quant == 'fp16':
         cfg = {
             'target_platform': TARGET_PLATFORM,
             'float_dtype': 'float16',   # перевод весов в FP16
-            # оставляем default quantize_weight=False
         }
         do_quant = False
+
     elif quant == 'int8':
         cfg = {
             'target_platform': TARGET_PLATFORM,
             'quantize_weight': True,
-            'quantized_dtype': 'w8a8',
+            'quantized_dtype': 'w8a8',  # вес+активации 8 бит
         }
         do_quant = True
+
     elif quant == 'int4':
         cfg = {
             'target_platform': TARGET_PLATFORM,
             'quantize_weight': True,
-            'quantized_dtype': 'w4a16',
+            'quantized_dtype': 'w4a16', # вес 4 бита, активации 16 бит
         }
         do_quant = True
+
     else:
         raise ValueError(f"Unsupported quant type: {quant}")
 
     # Применяем конфиг
     rknn.config(**cfg)
 
-    # Загружаем, строим и экспортируем
+    # Конвертация
     assert rknn.load_onnx(model=onnx_path) == 0
     assert rknn.build(do_quantization=do_quant, dataset=TRAIN_TXT) == 0
     assert rknn.export_rknn(rknn_path) == 0
     rknn.release()
+
     print(f"[INFO] Exported RKNN model: {rknn_path}")
 
 
