@@ -17,7 +17,7 @@ class DummyUnpickler(pickle.Unpickler):
         print(f"Missing: {module}.{name}")
         return lambda *args, **kwargs: None
 
-with open("model.pt", "rb") as f:
+with open("v10nfull.pt", "rb") as f:
     up = DummyUnpickler(f)
     up.load()
 
