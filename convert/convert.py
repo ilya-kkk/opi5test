@@ -58,6 +58,19 @@ def download_and_split_dataset():
 
 # === 1. Экспорт в ONNX без NMS ===
 def export_pt_to_onnx_no_nms(pt_model, onnx_out):
+
+    # --- SCDown monkey-patch ---
+    import torch
+    import ultralytics.nn.modules.block as block
+    from ultralytics.nn.modules.conv import Conv
+
+    class SCDown(Conv):
+        def __init__(self, *args, **kwargs):
+            super().__init__(*args, **kwargs)
+
+    setattr(block, 'SCDown', SCDown)
+# ----------------------------
+
     model = YOLO(pt_model)
     # экспорт без встроенного postprocess (no NMS)
     model.export(
