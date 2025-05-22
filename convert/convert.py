@@ -25,6 +25,6 @@ for name in head_names:
     dummy_setattr(head, name)
 
 # Теперь пробуем загрузить
-model_path = "model.pt"
+model_path = "v10nfull.pt"
 ckpt = torch.load(model_path, map_location="cpu")
 print("Checkpoint loaded!")
