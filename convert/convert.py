@@ -17,6 +17,10 @@ class DummyUnpickler(pickle.Unpickler):
         print(f"Missing: {module}.{name}")
         return lambda *args, **kwargs: None
 
+    def persistent_load(self, pid):
+        # Просто игнорируем persistent id
+        return None
+
 with open("v10nfull.pt", "rb") as f:
     up = DummyUnpickler(f)
     up.load()
