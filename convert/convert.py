@@ -80,9 +80,16 @@ def export_pt_to_onnx_no_nms(pt_model, onnx_out):
         def forward(self, x):
             return x
 
+    class C2fCIB(torch.nn.Module):
+        def __init__(self, *args, **kwargs):
+            super().__init__()
+        def forward(self, x):
+            return x
+
     setattr(block, 'SCDown', SCDown)
     setattr(block, 'PSA', PSA)
     setattr(block, 'Attention', Attention)
+    setattr(block, 'C2fCIB', C2fCIB)
     # -----------------------------------
 
 
