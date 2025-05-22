@@ -70,7 +70,7 @@ def convert_onnx_to_rknn(onnx_path, rknn_path, quant):
     elif quant == 'int4':
         cfg = {
             'target_platform': TARGET_PLATFORM,
-            'quantized_dtype': 'w4a8',  # Changed from w4a16 to w4a8
+            'quantized_dtype': 'w4a16', 
         }
         do_quant = True
 
