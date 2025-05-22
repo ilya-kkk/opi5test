@@ -59,7 +59,7 @@ def download_and_split_dataset():
 # === 1. Экспорт в ONNX без NMS ===
 def export_pt_to_onnx_no_nms(pt_model, onnx_out):
 
-    # --- SCDown monkey-patch ---
+    # --- SCDown and PSA monkey-patch ---
     import torch
     import ultralytics.nn.modules.block as block
     from ultralytics.nn.modules.conv import Conv
@@ -68,8 +68,17 @@ def export_pt_to_onnx_no_nms(pt_model, onnx_out):
         def __init__(self, *args, **kwargs):
             super().__init__(*args, **kwargs)
 
+    class PSA(torch.nn.Module):
+        def __init__(self, *args, **kwargs):
+            super().__init__()
+
+        def forward(self, x):
+            return x
+
     setattr(block, 'SCDown', SCDown)
-# ----------------------------
+    setattr(block, 'PSA', PSA)
+    # -----------------------------------
+
 
     model = YOLO(pt_model)
     # экспорт без встроенного postprocess (no NMS)
