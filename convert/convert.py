@@ -10,52 +10,17 @@ from dotenv import load_dotenv
 from sklearn.model_selection import train_test_split
 from rknn.api import RKNN
 
-# --- SCDown, PSA, Attention, C2fCIB, and CIB monkey-patch ---
-import torch
-import ultralytics.nn.modules.block as block
-from ultralytics.nn.modules.conv import Conv
+import pickle
 
-class SCDown(Conv):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+class DummyUnpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        print(f"Missing: {module}.{name}")
+        return lambda *args, **kwargs: None
 
-class PSA(torch.nn.Module):
-    def __init__(self, *args, **kwargs):
-        super().__init__()
-    def forward(self, x):
-        return x
+with open("model.pt", "rb") as f:
+    up = DummyUnpickler(f)
+    up.load()
 
-class Attention(torch.nn.Module):
-    def __init__(self, *args, **kwargs):
-        super().__init__()
-    def forward(self, x):
-        return x
-
-class C2fCIB(torch.nn.Module):
-    def __init__(self, *args, **kwargs):
-        super().__init__()
-    def forward(self, x):
-        return x
-
-class CIB(torch.nn.Module):
-    def __init__(self, *args, **kwargs):
-        super().__init__()
-    def forward(self, x):
-        return x
-
-class RepVGGDW(torch.nn.Module):
-    def __init__(self, *args, **kwargs):
-        super().__init__()
-    def forward(self, x):
-        return x
-
-setattr(block, 'RepVGGDW', RepVGGDW)
-setattr(block, 'SCDown', SCDown)
-setattr(block, 'PSA', PSA)
-setattr(block, 'Attention', Attention)
-setattr(block, 'C2fCIB', C2fCIB)
-setattr(block, 'CIB', CIB)
-# ------------------------------------------------------------
 
 
 # === Настройки ===
