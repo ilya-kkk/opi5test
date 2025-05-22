@@ -16,7 +16,15 @@ load_dotenv()
 ROBOFLOW_API_KEY   = os.getenv("ROBOFLOW_API_KEY")
 ROBOFLOW_WORKSPACE = os.getenv("ROBOFLOW_WORKSPACE")
 ROBOFLOW_PROJECT   = os.getenv("ROBOFLOW_PROJECT")
-ROBOFLOW_VERSION   = int(os.getenv("ROBOFLOW_VERSION"))
+ROBOFLOW_VERSION   = int(os.getenv("ROBOFLOW_VERSION", "1"))  # Default to version 1 if not set
+
+# Проверка обязательных переменных окружения
+if not all([ROBOFLOW_API_KEY, ROBOFLOW_WORKSPACE, ROBOFLOW_PROJECT]):
+    print("Error: Missing required environment variables:")
+    if not ROBOFLOW_API_KEY: print("- ROBOFLOW_API_KEY")
+    if not ROBOFLOW_WORKSPACE: print("- ROBOFLOW_WORKSPACE")
+    if not ROBOFLOW_PROJECT: print("- ROBOFLOW_PROJECT")
+    sys.exit(1)
 
 PT_MODEL       = 'v10nfull.pt'
 ONNX_MODEL     = 'v10nfull_no_nms.onnx'
