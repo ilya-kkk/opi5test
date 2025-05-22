@@ -21,7 +21,7 @@ for var in ("ROBOFLOW_API_KEY","ROBOFLOW_WORKSPACE","ROBOFLOW_PROJECT"):
 ONNX_MODEL      = 'v10nint8256.onnx'
 INPUT_SIZE      = (640, 640)
 TARGET_PLATFORM = 'rk3588'
-QUANT_TYPES     = ['fp16', 'int8', 'int4']
+QUANT_TYPES     = ['fp16', 'int8']
 
 DATASET_DIR = 'calib_images'
 TRAIN_TXT   = 'dataset_train.txt'
@@ -64,13 +64,6 @@ def convert_onnx_to_rknn(onnx_path, rknn_path, quant):
         cfg = {
             'target_platform': TARGET_PLATFORM,
             'quantized_dtype': 'w8a8',  # Changed from w8a16 to w8a8
-        }
-        do_quant = True
-
-    elif quant == 'int4':
-        cfg = {
-            'target_platform': TARGET_PLATFORM,
-            'quantized_dtype': 'w4a16', 
         }
         do_quant = True
 
