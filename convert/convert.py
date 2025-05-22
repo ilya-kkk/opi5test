@@ -52,37 +52,35 @@ def convert_onnx_to_rknn(onnx_path, rknn_path, quant):
     print(f"[INFO] Converting {onnx_path} → {quant}")
     rknn = RKNN()
 
-    # Выбираем правильные настройки под RK3588
+    # Updated configurations for RK3588
     if quant == 'fp16':
         cfg = {
             'target_platform': TARGET_PLATFORM,
-            'float_dtype': 'float16',   # перевод весов в FP16
+            'float_dtype': 'float16',
         }
         do_quant = False
 
     elif quant == 'int8':
         cfg = {
             'target_platform': TARGET_PLATFORM,
-            'quantize_weight': True,
-            'quantized_dtype': 'w8a8',  # вес+активации 8 бит
+            'quantized_dtype': 'w8a8',  # Changed from w8a16 to w8a8
         }
         do_quant = True
 
     elif quant == 'int4':
         cfg = {
             'target_platform': TARGET_PLATFORM,
-            'quantize_weight': True,
-            'quantized_dtype': 'w4a16', # вес 4 бита, активации 16 бит
+            'quantized_dtype': 'w4a8',  # Changed from w4a16 to w4a8
         }
         do_quant = True
 
     else:
         raise ValueError(f"Unsupported quant type: {quant}")
 
-    # Применяем конфиг
+    # Apply config
     rknn.config(**cfg)
 
-    # Конвертация
+    # Conversion
     assert rknn.load_onnx(model=onnx_path) == 0
     assert rknn.build(do_quantization=do_quant, dataset=TRAIN_TXT) == 0
     assert rknn.export_rknn(rknn_path) == 0
