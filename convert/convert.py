@@ -10,6 +10,47 @@ from dotenv import load_dotenv
 from sklearn.model_selection import train_test_split
 from rknn.api import RKNN
 
+# --- SCDown, PSA, Attention, C2fCIB, and CIB monkey-patch ---
+import torch
+import ultralytics.nn.modules.block as block
+from ultralytics.nn.modules.conv import Conv
+
+class SCDown(Conv):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+class PSA(torch.nn.Module):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+    def forward(self, x):
+        return x
+
+class Attention(torch.nn.Module):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+    def forward(self, x):
+        return x
+
+class C2fCIB(torch.nn.Module):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+    def forward(self, x):
+        return x
+
+class CIB(torch.nn.Module):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+    def forward(self, x):
+        return x
+
+setattr(block, 'SCDown', SCDown)
+setattr(block, 'PSA', PSA)
+setattr(block, 'Attention', Attention)
+setattr(block, 'C2fCIB', C2fCIB)
+setattr(block, 'CIB', CIB)
+# ------------------------------------------------------------
+
+
 # === Настройки ===
 load_dotenv()
 
@@ -58,49 +99,6 @@ def download_and_split_dataset():
 
 # === 1. Экспорт в ONNX без NMS ===
 def export_pt_to_onnx_no_nms(pt_model, onnx_out):
-
-# --- SCDown, PSA, Attention, C2fCIB, and CIB monkey-patch ---
-    import torch
-    import ultralytics.nn.modules.block as block
-    from ultralytics.nn.modules.conv import Conv
-
-    class SCDown(Conv):
-        def __init__(self, *args, **kwargs):
-            super().__init__(*args, **kwargs)
-
-    class PSA(torch.nn.Module):
-        def __init__(self, *args, **kwargs):
-            super().__init__()
-        def forward(self, x):
-            return x
-
-    class Attention(torch.nn.Module):
-        def __init__(self, *args, **kwargs):
-            super().__init__()
-        def forward(self, x):
-            return x
-
-    class C2fCIB(torch.nn.Module):
-        def __init__(self, *args, **kwargs):
-            super().__init__()
-        def forward(self, x):
-            return x
-
-    class CIB(torch.nn.Module):
-        def __init__(self, *args, **kwargs):
-            super().__init__()
-        def forward(self, x):
-            return x
-
-    setattr(block, 'SCDown', SCDown)
-    setattr(block, 'PSA', PSA)
-    setattr(block, 'Attention', Attention)
-    setattr(block, 'C2fCIB', C2fCIB)
-    setattr(block, 'CIB', CIB)
-# ------------------------------------------------------------
-
-
-
     model = YOLO(pt_model)
     # экспорт без встроенного postprocess (no NMS)
     model.export(
