@@ -22,17 +22,15 @@ class DummyUnpickler(pickle.Unpickler):
         return DummyObject
 
     def persistent_load(self, pid):
-        # Протокол 0 требует ASCII-строку
-        if not isinstance(pid, str):
-            print(f"[INVALID PERSISTENT ID] {pid}")
-            return "dummy"
-        return "dummy"
+        # Протокол 0 требует ASCII-строки
+        print(f"[PERSISTENT LOAD] pid: {pid} (type: {type(pid)})")
+        if isinstance(pid, str):
+            return pid
+        return "dummy_id"
 
 with open("v10nfull.pt", "rb") as f:
     up = DummyUnpickler(f)
     up.load()
-
-
 
 
 
