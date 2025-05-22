@@ -12,18 +12,23 @@ from rknn.api import RKNN
 
 import pickle
 
+class DummyObject:
+    def __init__(self, *args, **kwargs):
+        pass
+
 class DummyUnpickler(pickle.Unpickler):
     def find_class(self, module, name):
         print(f"Missing: {module}.{name}")
-        return lambda *args, **kwargs: None
+        return DummyObject
 
     def persistent_load(self, pid):
-        # Просто игнорируем persistent id
-        return None
+        # Возвращаем фиктивный идентификатор (ASCII-строку или объект)
+        return "dummy_id"
 
 with open("v10nfull.pt", "rb") as f:
     up = DummyUnpickler(f)
     up.load()
+
 
 
 
