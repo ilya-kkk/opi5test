@@ -52,13 +52,25 @@ def download_and_split_dataset():
 def convert_onnx_to_rknn(onnx_path, rknn_path, quant):
     print(f"[INFO] Converting {onnx_path} → {quant}")
     rknn = RKNN()
+
+    # Настройка квантования
+    quant_settings = {
+        'fp16':   {'quantize_input': False, 'quantized_dtype': 'w16a16i'},
+        'int8':   {'quantize_input': True,  'quantized_dtype': 'w8a8'},
+        'int4':   {'quantize_input': True,  'quantized_dtype': 'w4a16'},
+    }
+
+    if quant not in quant_settings:
+        raise ValueError(f"Unsupported quant type: {quant}")
+
     rknn.config(
         target_platform=TARGET_PLATFORM,
-        quantize_input=(quant != 'fp16'),
-        quantized_dtype=(None if quant == 'fp16' else quant)
+        quantize_input=quant_settings[quant]['quantize_input'],
+        quantized_dtype=quant_settings[quant]['quantized_dtype']
     )
+
     assert rknn.load_onnx(model=onnx_path) == 0
-    assert rknn.build(do_quantization=(quant != 'fp16'), dataset=TRAIN_TXT) == 0
+    assert rknn.build(do_quantization=quant != 'fp16', dataset=TRAIN_TXT) == 0
     assert rknn.export_rknn(rknn_path) == 0
     rknn.release()
     print(f"[INFO] Exported RKNN model: {rknn_path}")
