@@ -4,11 +4,48 @@ import time
 import cv2
 import numpy as np
 import torch
-from ultralytics import YOLO
+
 from roboflow import Roboflow
 from dotenv import load_dotenv
 from sklearn.model_selection import train_test_split
 from rknn.api import RKNN
+
+
+import torch.nn as nn
+
+class DummyModule(nn.Module):
+    def __init__(self, *args, **kwargs):
+        super().__init__()
+    def forward(self, x):
+        return x
+
+# Регистрируем кастомные классы как заглушки ПЕРЕД загрузкой модели
+import ultralytics.nn.modules.block as block
+import ultralytics.nn.modules.head as head
+
+dummy_classes = {
+    'SCDown': DummyModule,
+    'PSA': DummyModule,
+    'Attention': DummyModule,
+    'C2fCIB': DummyModule,
+    'CIB': DummyModule,
+    'RepVGGDW': DummyModule,
+    'v10Detect': DummyModule,
+}
+
+for name, cls in dummy_classes.items():
+    parts = name.lower()
+    try:
+        setattr(block, name, cls)
+    except:
+        pass
+    try:
+        setattr(head, name, cls)
+    except:
+        pass
+
+# Теперь можно безопасно импортировать YOLO и загружать модель
+from ultralytics import YOLO
 
 # === Настройки ===
 load_dotenv()
