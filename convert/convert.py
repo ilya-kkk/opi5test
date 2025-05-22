@@ -18,16 +18,20 @@ class DummyObject:
 
 class DummyUnpickler(pickle.Unpickler):
     def find_class(self, module, name):
-        print(f"Missing: {module}.{name}")
+        print(f"[MISSING CLASS] {module}.{name}")
         return DummyObject
 
     def persistent_load(self, pid):
-        # Возвращаем фиктивный идентификатор (ASCII-строку или объект)
-        return "dummy_id"
+        # Протокол 0 требует ASCII-строку
+        if not isinstance(pid, str):
+            print(f"[INVALID PERSISTENT ID] {pid}")
+            return "dummy"
+        return "dummy"
 
 with open("v10nfull.pt", "rb") as f:
     up = DummyUnpickler(f)
     up.load()
+
 
 
 
