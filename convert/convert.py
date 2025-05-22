@@ -49,36 +49,49 @@ def download_and_split_dataset():
     print(f"[INFO] Split done. Train={len(train)} Valid={len(valid)}")
 
 # === 1. Конвертация ONNX → RKNN с квантованием ===
+# === 1. Конвертация ONNX → RKNN с квантованием ===
 def convert_onnx_to_rknn(onnx_path, rknn_path, quant):
     print(f"[INFO] Converting {onnx_path} → {quant}")
     rknn = RKNN()
 
-    # Правильные настройки для каждого quant
-    quant_settings = {
-        'fp16': {'quantize_weight': False, 'quantized_dtype': 'w16a16i'},
-        'int8': {'quantize_weight': True,  'quantized_dtype': 'w8a8'},
-        'int4': {'quantize_weight': True,  'quantized_dtype': 'w4a16'},
-    }
-
-    if quant not in quant_settings:
+    # Поддерживаемые параметры для RK3588
+    #   • fp16: без квантования весов, но с понижением precision -> float16
+    #   • int8: квантование весов в w8a8
+    #   • int4: квантование весов в w4a16
+    if quant == 'fp16':
+        cfg = {
+            'target_platform': TARGET_PLATFORM,
+            'float_dtype': 'float16',   # перевод весов в FP16
+            # оставляем default quantize_weight=False
+        }
+        do_quant = False
+    elif quant == 'int8':
+        cfg = {
+            'target_platform': TARGET_PLATFORM,
+            'quantize_weight': True,
+            'quantized_dtype': 'w8a8',
+        }
+        do_quant = True
+    elif quant == 'int4':
+        cfg = {
+            'target_platform': TARGET_PLATFORM,
+            'quantize_weight': True,
+            'quantized_dtype': 'w4a16',
+        }
+        do_quant = True
+    else:
         raise ValueError(f"Unsupported quant type: {quant}")
 
-    cfg = {
-        'target_platform': TARGET_PLATFORM,
-        'quantize_weight': quant_settings[quant]['quantize_weight'],
-        'quantized_dtype': quant_settings[quant]['quantized_dtype'],
-        # можно добавить другие опции при необходимости:
-        # 'mean_values': [[127.5,127.5,127.5]],
-        # 'std_values':  [[127.5,127.5,127.5]],
-    }
+    # Применяем конфиг
     rknn.config(**cfg)
 
+    # Загружаем, строим и экспортируем
     assert rknn.load_onnx(model=onnx_path) == 0
-    # do_quantization = quantize_weight
-    assert rknn.build(do_quantization=quant_settings[quant]['quantize_weight'], dataset=TRAIN_TXT) == 0
+    assert rknn.build(do_quantization=do_quant, dataset=TRAIN_TXT) == 0
     assert rknn.export_rknn(rknn_path) == 0
     rknn.release()
     print(f"[INFO] Exported RKNN model: {rknn_path}")
+
 
 # === 2. Инференс + замер времени + точность ===
 def evaluate_model(rknn_path):
