@@ -92,7 +92,7 @@ def export_pt_to_onnx_no_nms(pt_model, onnx_out):
         opset=11,
         dynamic=False,
         simplify=True,
-        imgsz=INPUT_SIZE
+        imgsz=(640, 640) 
     )
 
     # ulralytics по умолчанию сохранёт как model.onnx в cwd, переименуем:
