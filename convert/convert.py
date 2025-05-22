@@ -3,49 +3,10 @@ import sys
 import time
 import cv2
 import numpy as np
-import torch
-
 from roboflow import Roboflow
 from dotenv import load_dotenv
 from sklearn.model_selection import train_test_split
 from rknn.api import RKNN
-
-
-import torch.nn as nn
-
-class DummyModule(nn.Module):
-    def __init__(self, *args, **kwargs):
-        super().__init__()
-    def forward(self, x):
-        return x
-
-# Регистрируем кастомные классы как заглушки ПЕРЕД загрузкой модели
-import ultralytics.nn.modules.block as block
-import ultralytics.nn.modules.head as head
-
-dummy_classes = {
-    'SCDown': DummyModule,
-    'PSA': DummyModule,
-    'Attention': DummyModule,
-    'C2fCIB': DummyModule,
-    'CIB': DummyModule,
-    'RepVGGDW': DummyModule,
-    'v10Detect': DummyModule,
-}
-
-for name, cls in dummy_classes.items():
-    parts = name.lower()
-    try:
-        setattr(block, name, cls)
-    except:
-        pass
-    try:
-        setattr(head, name, cls)
-    except:
-        pass
-
-# Теперь можно безопасно импортировать YOLO и загружать модель
-from ultralytics import YOLO
 
 # === Настройки ===
 load_dotenv()
@@ -57,8 +18,7 @@ for var in ("ROBOFLOW_API_KEY","ROBOFLOW_WORKSPACE","ROBOFLOW_PROJECT"):
     if not os.getenv(var):
         print(f"Error: Missing {var}"); sys.exit(1)
 
-PT_MODEL        = 'v10nfull.pt'
-ONNX_MODEL      = 'v10nfull_no_nms.onnx'
+ONNX_MODEL      = 'v10nint8256.onnx'
 INPUT_SIZE      = (640, 640)
 TARGET_PLATFORM = 'rk3588'
 QUANT_TYPES     = ['fp16', 'int8', 'int4']
@@ -88,48 +48,27 @@ def download_and_split_dataset():
     with open(VALID_TXT,'w') as fv: fv.write('\n'.join(valid))
     print(f"[INFO] Split done. Train={len(train)} Valid={len(valid)}")
 
-# === 1. Экспорт в ONNX вручную без NMS ===
-def export_pt_to_onnx_no_nms(pt_path, onnx_out):
-    # 1) Загружаем модель Ultralytics и берем чистый nn.Module
-    yolo = YOLO(pt_path)     # загружает структуру и веса
-    model = yolo.model        # это torch.nn.Module
-    model.eval()
-
-    # 2) Dummy-вход с правильными каналами
-    dummy = torch.randn(1, 3, *INPUT_SIZE, dtype=torch.float32)
-
-    # 3) Экспортим в ONNX
-    torch.onnx.export(
-        model, dummy, onnx_out,
-        input_names=['images'],
-        output_names=['output'],
-        opset_version=11,
-        dynamic_axes={'images': {0: 'batch'}},
-        do_constant_folding=True
-    )
-    print(f"[INFO] ONNX saved to {onnx_out}")
-
-# === 2. Конвертация ONNX → RKNN с квантованием ===
+# === 1. Конвертация ONNX → RKNN с квантованием ===
 def convert_onnx_to_rknn(onnx_path, rknn_path, quant):
     print(f"[INFO] Converting {onnx_path} → {quant}")
     rknn = RKNN()
     rknn.config(
         target_platform=TARGET_PLATFORM,
-        quantize_input=(quant!='fp16'),
-        quantized_dtype=(None if quant=='fp16' else quant)
+        quantize_input=(quant != 'fp16'),
+        quantized_dtype=(None if quant == 'fp16' else quant)
     )
-    assert rknn.load_onnx(model=onnx_path)==0
-    assert rknn.build(do_quantization=(quant!='fp16'), dataset=TRAIN_TXT)==0
-    assert rknn.export_rknn(rknn_path)==0
+    assert rknn.load_onnx(model=onnx_path) == 0
+    assert rknn.build(do_quantization=(quant != 'fp16'), dataset=TRAIN_TXT) == 0
+    assert rknn.export_rknn(rknn_path) == 0
     rknn.release()
     print(f"[INFO] Exported RKNN model: {rknn_path}")
 
-# === 3. Инференс + замер времени + точность ===
+# === 2. Инференс + замер времени + точность ===
 def evaluate_model(rknn_path):
     print(f"[INFO] Evaluating {rknn_path}")
     rknn = RKNN()
-    assert rknn.load_rknn(rknn_path)==0
-    assert rknn.init_runtime(target=TARGET_PLATFORM)==0
+    assert rknn.load_rknn(rknn_path) == 0
+    assert rknn.init_runtime(target=TARGET_PLATFORM) == 0
 
     with open(VALID_TXT) as f:
         val_list = [l.strip() for l in f if l.strip()]
@@ -153,8 +92,9 @@ def evaluate_model(rknn_path):
         total += 1
 
     rknn.release()
-    if total == 0: return 0.0, 0.0
-    return (total_time/total)*1000, correct/total*100.0
+    if total == 0:
+        return 0.0, 0.0
+    return (total_time / total) * 1000, correct / total * 100.0
 
 def extract_label_from_filename(path):
     for part in os.path.basename(path).split('_'):
@@ -165,11 +105,10 @@ def extract_label_from_filename(path):
 # === Main ===
 if __name__ == "__main__":
     download_and_split_dataset()
-    export_pt_to_onnx_no_nms(PT_MODEL, ONNX_MODEL)
 
     results = []
     for q in QUANT_TYPES:
-        out = f"model_{q}.rknn"
+        out = f"v10nint8256_{q}.rknn"
         convert_onnx_to_rknn(ONNX_MODEL, out, q)
         results.append((q, out))
 
