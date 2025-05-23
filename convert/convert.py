@@ -18,7 +18,7 @@ for var in ("ROBOFLOW_API_KEY","ROBOFLOW_WORKSPACE","ROBOFLOW_PROJECT"):
     if not os.getenv(var):
         print(f"Error: Missing {var}"); sys.exit(1)
 
-ONNX_MODEL      = 'v10nint8256.onnx'
+ONNX_MODEL      = 'v10nint8256_no_topk.onnx'
 INPUT_SIZE      = (640, 640)
 TARGET_PLATFORM = 'rk3588'
 QUANT_TYPES     = ['fp16', 'int8']
