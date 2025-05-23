@@ -1,0 +1,22 @@
+version: '3.8'
+
+services:
+  rknn_runner:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: orangepi_rknn_runner
+    volumes:
+      - .:/app
+      - /dev:/dev
+    working_dir: /app
+    privileged: true
+    environment:
+      - PYTHONPATH=/app
+      - LD_LIBRARY_PATH=/usr/lib
+    devices:
+      - /dev/rknpu0
+      - /dev/dri
+      - /dev/rga
+    command: python infer_test.py
+    restart: "no"
