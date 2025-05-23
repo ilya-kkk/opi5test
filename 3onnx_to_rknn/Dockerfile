@@ -28,6 +28,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
     pip install --no-cache-dir ultralytics==8.0.196 && \
     pip install --no-cache-dir -r /app/requirements.txt && \
     pip install --no-cache-dir pandas tabulate && \
+    pip install --no-cache-dir onnx onnx-graphsurgeon && \
     rm -rf /root/.cache/pip/*
 
 # 4) Копируем код
@@ -37,4 +38,4 @@ COPY . /app
 ENV LD_LIBRARY_PATH=/usr/lib64:/usr/lib:$LD_LIBRARY_PATH
 
 # 6) Запуск
-CMD ["python", "infer_test.py"]
+CMD ["python", "convert.py"]
