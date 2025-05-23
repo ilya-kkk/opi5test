@@ -7,6 +7,8 @@ from roboflow import Roboflow
 from dotenv import load_dotenv
 from sklearn.model_selection import train_test_split
 from rknn.api import RKNN
+import onnx
+import onnx_graphsurgeon as gs
 
 # === Настройки ===
 load_dotenv()
@@ -27,7 +29,33 @@ DATASET_DIR = 'calib_images'
 TRAIN_TXT   = 'dataset_train.txt'
 VALID_TXT   = 'dataset_valid.txt'
 
-# === 0. Roboflow: загрузка и сплит ===
+def clean_onnx_model(onnx_path):
+    """Remove TopK and NMS nodes from ONNX model"""
+    print(f"[INFO] Cleaning ONNX model: {onnx_path}")
+    model = onnx.load(onnx_path)
+    graph = gs.import_onnx(model)
+
+    # Find and remove TopK and NMS nodes
+    nodes_to_remove = []
+    for node in graph.nodes:
+        if node.op in ['TopK', 'NonMaxSuppression']:
+            nodes_to_remove.append(node)
+            # Connect input of TopK/NMS to its output
+            for output in node.outputs:
+                for consumer in output.outputs:
+                    consumer.inputs = [node.inputs[0]]  # Use first input of TopK/NMS
+
+    # Remove the nodes
+    for node in nodes_to_remove:
+        graph.nodes.remove(node)
+
+    # Clean up and save
+    graph.cleanup().toposort()
+    cleaned_path = onnx_path.replace('.onnx', '_cleaned.onnx')
+    onnx.save(gs.export_onnx(graph), cleaned_path)
+    print(f"[INFO] Cleaned model saved to: {cleaned_path}")
+    return cleaned_path
+
 def download_and_split_dataset():
     print("[INFO] Downloading dataset from Roboflow...")
     rf      = Roboflow(api_key=ROBOFLOW_API_KEY)
@@ -63,7 +91,7 @@ def convert_onnx_to_rknn(onnx_path, rknn_path, quant):
     elif quant == 'int8':
         cfg = {
             'target_platform': TARGET_PLATFORM,
-            'quantized_dtype': 'w8a8',  # Changed from w8a16 to w8a8
+            'quantized_dtype': 'w8a8',
         }
         do_quant = True
 
@@ -80,7 +108,6 @@ def convert_onnx_to_rknn(onnx_path, rknn_path, quant):
     rknn.release()
 
     print(f"[INFO] Exported RKNN model: {rknn_path}")
-
 
 # === 2. Инференс + замер времени + точность ===
 def evaluate_model(rknn_path):
@@ -123,12 +150,17 @@ def extract_label_from_filename(path):
 
 # === Main ===
 if __name__ == "__main__":
+    # Clean ONNX model first
+    cleaned_onnx = clean_onnx_model(ONNX_MODEL)
+    
+    # Download dataset
     download_and_split_dataset()
 
+    # Convert to RKNN
     results = []
     for q in QUANT_TYPES:
         out = f"v10nint8256_{q}.rknn"
-        convert_onnx_to_rknn(ONNX_MODEL, out, q)
+        convert_onnx_to_rknn(cleaned_onnx, out, q)
         results.append((q, out))
 
     print("\n[RESULTS]")
