@@ -1,3 +1,7 @@
+2025-05-23 17:45:08 +0300 Remove work_analysis.bash script as it is no longer needed for the project.
+2025-05-23 17:42:06 +0300 Add work_analysis.bash, work_analysis.py, and work.txt to .gitignore for improved file management
+2025-05-23 17:26:27 +0300 Rename rknn_inference service to rknn_runner in docker-compose.yml and update container name for consistency. Removed auto_remove option for simplified container management.
+2025-05-23 17:25:18 +0300 Rename rknn_runner service to rknn_inference in docker-compose.yml and update container name. Added restart and auto_remove options for improved container management.
 2025-05-23 17:08:36 +0300 Enhance inference testing framework in infer_test.py
 2025-05-23 21:59:37 +0800 add convert models
 2025-05-23 16:43:30 +0300 Update ONNX model reference in convert.py to 'v10nint8256_no_topk.onnx' for improved compatibility with the latest model structure.

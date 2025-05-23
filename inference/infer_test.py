@@ -21,6 +21,8 @@ INPUT_SIZE = (640, 640)
 NUM_RUNS = 100
 DATASET_DIR = 'calib_images'
 VALID_TXT = 'dataset_valid.txt'
+CONF_THRESHOLD = 0.25
+IOU_THRESHOLD = 0.45
 
 def download_dataset():
     """Download and prepare dataset from Roboflow"""
@@ -80,6 +82,30 @@ def extract_label_from_filename(path):
             return int(part.split('.')[0])
     return 0
 
+def process_output(output, conf_threshold=CONF_THRESHOLD):
+    """Process YOLOv5 output to get predictions"""
+    # Reshape output to [num_boxes, num_classes + 5]
+    predictions = output[0]
+    boxes = predictions[:, :4]  # x1, y1, x2, y2
+    scores = predictions[:, 4:]  # class scores
+    
+    # Get class with highest confidence
+    class_scores = np.max(scores, axis=1)
+    class_ids = np.argmax(scores, axis=1)
+    
+    # Filter by confidence
+    mask = class_scores > conf_threshold
+    boxes = boxes[mask]
+    class_ids = class_ids[mask]
+    class_scores = class_scores[mask]
+    
+    if len(boxes) == 0:
+        return None
+    
+    # Return the class with highest confidence
+    best_idx = np.argmax(class_scores)
+    return class_ids[best_idx]
+
 def measure_inference_time(model, image, num_runs=NUM_RUNS):
     """Measure inference time"""
     times = []
@@ -111,9 +137,11 @@ def measure_accuracy(model, validation_images):
             continue
             
         out = model.inference(inputs=[img])[0]
-        pred = int(np.argmax(out))
+        pred = process_output(out)
+        if pred is None:
+            continue
+            
         lbl = extract_label_from_filename(img_path)
-        
         correct += (pred == lbl)
         total += 1
     
