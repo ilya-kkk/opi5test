@@ -5,7 +5,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: orangepi_rknn_runner
+    container_name: onnx_to_rknn
     volumes:
       - .:/app
       - /dev:/dev
