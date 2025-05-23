@@ -1,11 +1,11 @@
 version: '3.8'
 
 services:
-  rknn_runner:
+  rknn_inference:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: orangepi_rknn_runner
+    container_name: orangepi_rknn_inference
     volumes:
       - .:/app
       - /dev:/dev
@@ -19,3 +19,5 @@ services:
       - /dev/dri
       - /dev/rga
     command: python infer_test.py
+    restart: "no"
+    auto_remove: true

@@ -1,0 +1,103 @@
+2025-05-23 17:08:36 +0300 Enhance inference testing framework in infer_test.py
+2025-05-23 21:59:37 +0800 add convert models
+2025-05-23 16:43:30 +0300 Update ONNX model reference in convert.py to 'v10nint8256_no_topk.onnx' for improved compatibility with the latest model structure.
+2025-05-23 16:35:07 +0300 Refactor quantization settings in convert.py to improve clarity and maintainability. Updated the configuration structure for better readability and streamlined the quantization process by consolidating related comments. Enhanced validation for quantization types to prevent errors during model conversion.
+2025-05-22 19:52:56 +0300 Remove 'int4' quantization type from convert.py to simplify quantization options and enhance compatibility with RK3588. This change streamlines the conversion process by focusing on 'fp16' and 'int8' quantization types only.
+2025-05-22 19:43:02 +0300 Revert quantized_dtype setting in convert.py to 'w4a16' for consistency with previous configurations
+2025-05-22 19:40:02 +0300 Update quantization configurations in convert.py for RK3588 compatibility
+2025-05-22 16:52:19 +0300 Refine quantization configuration in convert.py for ONNX to RKNN conversion
+2025-05-22 16:49:55 +0300 Refactor ONNX to RKNN conversion process in convert.py for enhanced quantization handling
+2025-05-22 16:47:03 +0300 Remove deprecated ONNX model files v10nfull.onnx and v10nint8256.onnx to streamline the conversion process and eliminate unused resources.
+2025-05-22 16:43:45 +0300 Refactor quantization settings in convert.py for improved clarity and functionality
+2025-05-22 16:35:28 +0300 Enhance quantization process in convert.py for ONNX to RKNN conversion
+2025-05-22 16:25:31 +0300 Refactor convert.py to streamline ONNX model handling and update quantization process
+2025-05-22 16:07:12 +0300 Add dummy module registrations in convert.py for safe YOLO model loading
+2025-05-22 15:57:27 +0300 Update image size parameter in ONNX export function to use INPUT_SIZE for flexibility in model configuration.
+2025-05-22 15:46:18 +0300 Update image size parameter in ONNX export function to (128, 128) for improved model compatibility.
+2025-05-22 15:44:46 +0300 Update image size parameter in ONNX export function to (640, 480) for improved aspect ratio handling.
+2025-05-22 15:28:50 +0300 Update image size parameter in ONNX export function to a fixed value of (640, 640) for consistency in model conversion.
+2025-05-22 15:22:56 +0300 Remove commented-out NMS option in ONNX export function for clarity and maintainability.
+2025-05-22 15:14:45 +0300 Add dataset handling and model conversion functions in convert.py
+2025-05-22 14:51:01 +0300 Update model file reference in convert.py from "model.pt" to "v10nfull.pt" to ensure compatibility with the latest model version.
+2025-05-22 14:50:16 +0300 Refactor convert.py by replacing DummyObject with DummyModule and implementing a forward method. Introduce dummy_setattr function to substitute missing modules with DummyModule, enhancing model loading capabilities.
+2025-05-22 14:49:09 +0300 Refactor persistent_load method in DummyUnpickler to simplify ID handling and improve logging, ensuring a consistent return of a dummy string.
+2025-05-22 14:47:33 +0300 Refactor persistent_load method in DummyUnpickler to improve logging and ID handling, ensuring correct type validation and returning the persistent ID when valid.
+2025-05-22 14:46:14 +0300 Improve error handling in DummyUnpickler by updating class not found messages and validating persistent IDs, ensuring better diagnostics during model loading.
+2025-05-22 14:43:51 +0300 Add DummyObject class and update persistent_load method in DummyUnpickler to return a dummy identifier, improving handling of missing classes during model loading.
+2025-05-22 14:42:01 +0300 Add persistent_load method to DummyUnpickler in convert.py to ignore persistent IDs during model loading, enhancing error handling.
+2025-05-22 14:38:31 +0300 Update model file reference in convert.py from "model.pt" to "v10nfull.pt" to align with the latest model version.
+2025-05-22 14:37:43 +0300 Remove unused monkey-patch classes from convert.py and implement a DummyUnpickler for handling missing classes during model loading, improving error handling for model exports.
+2025-05-22 14:34:54 +0300 Add RepVGGDW monkey-patch in convert.py to enhance model export capabilities in the export_pt_to_onnx_no_nms function, complementing existing patches like SCDown, PSA, and Attention.
+2025-05-22 14:33:10 +0300 Add SCDown, PSA, Attention, C2fCIB, and CIB monkey-patches to convert.py, enhancing model export capabilities in the export_pt_to_onnx_no_nms function.
+2025-05-22 14:21:24 +0300 Add CIB monkey-patch in export_pt_to_onnx_no_nms function, expanding model export capabilities alongside existing SCDown, PSA, Attention, and C2fCIB patches.
+2025-05-22 14:12:25 +0300 Add C2fCIB monkey-patch in export_pt_to_onnx_no_nms function, expanding model export capabilities alongside existing SCDown, PSA, and Attention patches.
+2025-05-22 14:10:15 +0300 Add Attention monkey-patch in export_pt_to_onnx_no_nms function, enhancing model export capabilities alongside existing PSA and SCDown patches.
+2025-05-22 14:08:03 +0300 Enhance export_pt_to_onnx_no_nms function by adding PSA monkey-patch alongside SCDown, improving model export capabilities.
+2025-05-22 14:04:28 +0300 Add SCDown monkey-patch in export_pt_to_onnx_no_nms function to enhance model export capabilities without NMS.
+2025-05-22 13:25:37 +0300 Update requirements.txt to downgrade ultralytics from version 8.0.197 to 8.0.150 for compatibility improvements.
+2025-05-22 13:19:46 +0300 Refactor convert.py to include validation for required environment variables and set a default value for ROBOFLOW_VERSION, improving configuration management and error handling.
+2025-05-22 13:05:29 +0300 Add default value for ROBOFLOW_VERSION and validate required environment variables in convert.py
+2025-05-21 18:39:14 +0300 Update Dockerfile to further refine the installation process by optimizing the copying of shared libraries and ensuring all necessary dependencies are included. This enhances runtime support and maintains a clean project structure.
+2025-05-21 18:20:19 +0300 Remove requirements.txt and obsolete RKNN Toolkit wheel file, updating Dockerfile to reflect the correct path for the wheel file. This cleanup enhances project structure and ensures accurate dependency management.
+2025-05-21 18:17:10 +0300 Update Dockerfile to change the path for copying the RKNN Toolkit wheel file, ensuring it references the correct location. Remove the obsolete wheel file from the inference directory to clean up the project structure.
+2025-05-21 18:13:48 +0300 make dir
+2025-05-21 18:06:37 +0300 Update docker-compose.yml to change the command from infer_test.py to convert.py. Remove main.py as it is no longer needed, streamlining the project structure.
+2025-05-21 18:05:01 +0300 Refactor main.py to streamline dataset handling and model conversion processes. Update dataset download and splitting logic, enhance ONNX export functionality without NMS, and improve RKNN conversion with quantization support. Simplify model evaluation and adjust main execution flow for clarity.
+2025-05-21 15:43:52 +0300 Refactor Dockerfile to streamline system dependencies installation and update runtime library copying process. Replace RKNN Toolkit clone with direct download from rknpu2, ensuring only necessary shared libraries are copied. Simplify pip installation commands and enhance comments for clarity.
+2025-05-21 15:25:19 +0300 Update Dockerfile to modify LD_LIBRARY_PATH, adding /usr/lib64 for improved library access during runtime. This change ensures compatibility with shared libraries required by the application.
+2025-05-21 15:06:14 +0300 Update Dockerfile to copy additional shared libraries from RKNN Toolkit, enhancing runtime support by including liblog.so and all other relevant .so files. Adjust permissions for the copied libraries to ensure proper access.
+2025-05-21 14:43:05 +0300 снизу коммит билд без ошибок
+2025-05-21 14:28:37 +0300 Refactor Dockerfile to clone RKNN Toolkit repository for runtime library installation, improving build process by ensuring the latest version is used. Add git dependency and streamline cleanup steps.
+2025-05-21 13:03:37 +0300 Enhance Dockerfile by adding verbose output to pip installation commands for better debugging and visibility during the build process.
+2025-05-21 12:38:32 +0300 Add curl to Dockerfile dependencies for improved download capabilities.
+2025-05-21 12:25:59 +0300 Update Dockerfile to replace wget with curl for downloading RKNN runtime library, enhancing error handling with retry options.
+2025-05-21 12:15:36 +0300 Enhance Dockerfile by adding retry and timeout options to the RKNN runtime library download command, improving robustness during the build process.
+2025-05-20 18:21:49 +0300 Refactor Dockerfile to improve comments, replace RKNN Toolkit cloning with direct library download, and streamline pip installation steps. Update library path configuration and ensure proper application code copying.
+2025-05-20 18:01:15 +0300 Refactor Dockerfile to update system dependency installation comments, streamline RKNN Toolkit setup, and enhance library path configuration. Adjust pip installation steps for clarity and ensure proper application code copying.
+2025-05-20 17:58:59 +0300 Enhance Dockerfile by adding RK3588 NPU runtime and python3-rknnlite2 installation. Update pip dependencies to include pandas and tabulate, and set LD_LIBRARY_PATH for library access. Streamline cleanup commands and ensure proper code copying for application execution.
+2025-05-20 17:03:07 +0300 Comment out RKNN Toolkit installation in Dockerfile to streamline the build process and maintain a cleaner configuration.
+2025-05-20 17:02:02 +0300 Refactor Dockerfile to enable RKNN Toolkit installation and streamline package management by removing unnecessary comments and cleaning up pip cache. Update apt installation to exclude python3-rknnlite2, simplifying dependencies.
+2025-05-20 16:40:22 +0300 Update Dockerfile to comment out RKNN Toolkit installation steps and add installation of python3-rknnlite2 and rknpu2-rk3588, along with setting LD_LIBRARY_PATH for library access.
+2025-05-20 16:29:50 +0300 Refactor infer_test.py to use hardcoded image path and run count, removing command-line argument parsing. Update docker-compose.yml to simplify the inference command by directly invoking the script without parameters.
+2025-05-20 16:27:10 +0300 Update inference command in docker-compose.yml to include runs parameter for enhanced execution of infer_test.py.
+2025-05-20 16:25:44 +0300 Update inference command in docker-compose.yml to remove run parameter, simplifying execution of infer_test.py.
+2025-05-20 16:24:54 +0300 Update TEST_IMAGE path in docker-compose.yml to use absolute path for improved service configuration
+2025-05-20 16:21:12 +0300 Refactor docker-compose.yml to simplify inference command by removing image listing and update Dockerfile to remove unnecessary application code copy step.
+2025-05-20 16:14:43 +0300 Update docker-compose.yml to include image listing and parameterized inference command for improved execution of infer_test.py.
+2025-05-20 16:11:36 +0300 Add working directory configuration to docker-compose.yml for improved service execution
+2025-05-20 16:10:35 +0300 Remove GPU deployment configuration from docker-compose.yml to simplify service setup for infer_test.py.
+2025-05-20 15:42:48 +0300 Update inference command in docker-compose.yml to remove default parameters for image and runs, simplifying execution of infer_test.py.
+2025-05-20 15:40:35 +0300 Refactor docker-compose.yml and infer_test.py: rename service, enhance environment variables, and improve inference command. Update default parameters for image and runs in the inference script.
+2025-05-20 15:23:50 +0300 Add pandas and tabulate to Dockerfile for enhanced data handling and reporting
+2025-05-20 15:15:48 +0300 Enhance infer_test.py: add model testing functionality, improve inference reporting with statistics, and save results to CSV. Introduce support for multiple models and display results in a formatted table.
+2025-05-20 15:09:21 +0300 update entrypoint in docker-compose.yml to use infer_test.py and remove RKNN library checks from main.py for cleaner execution
+2025-05-20 15:04:27 +0300 add glob import and reintroduce RKNN library check in main.py for improved error handling
+2025-05-20 13:54:41 +0300 refactor Dockerfile to consolidate dependency installation, remove unnecessary steps, and streamline RKNN Runtime setup
+2025-05-20 12:49:03 +0300 update Dockerfile to add Debian repositories and install OpenCV via pip instead of apt
+2025-05-20 12:33:30 +0300 refactor Dockerfile to improve dependency installation process, increase apt space, and streamline cleanup steps
+2025-05-20 12:25:20 +0300 enhance Dockerfile and main.py: add dependencies for RKNN Runtime and improve error handling in model conversion and evaluation
+2025-05-20 12:05:29 +0300 refactor Dockerfile to simplify RKNN Runtime installation by removing direct wheel downloads
+2025-05-20 12:04:29 +0300 update Dockerfile to install RKNN Runtime version 1.4.0 instead of 1.5.0
+2025-05-20 03:33:27 +0300 update Dockerfile to use -O option for wget and disable certificate checks during RKNN Runtime installation
+2025-05-20 03:30:07 +0300 update quantization types in main.py to include 'int4'
+2025-05-20 08:17:09 +0800 add rknn models
+2025-05-20 03:01:34 +0300 add RKNN Runtime installation to Dockerfile
+2025-05-20 02:22:25 +0300 enhance model evaluation with runtime initialization and error handling
+2025-05-20 02:08:05 +0300 remove unused RKNNLite import from main.py
+2025-05-20 02:05:45 +0300 update model evaluation to use RKNN instead of RKNNLite
+2025-05-20 01:48:24 +0300 add entrypoint to docker-compose for main.py execution
+2025-05-20 01:12:37 +0300 refactor Dockerfile to consolidate package installations and improve layer caching
+2025-05-20 01:08:47 +0300 refactor Dockerfile to streamline package installations and improve caching
+2025-05-20 00:56:09 +0300 optimize Dockerfile by consolidating package installations and cleaning up cache
+2025-05-20 00:30:18 +0300 1
+2025-05-17 01:18:33 +0300 1
+2025-05-17 01:11:27 +0300 add onnx
+2025-05-17 00:57:43 +0300 udg req
+2025-05-17 00:54:03 +0300 upd data format
+2025-05-17 00:30:01 +0300 ц
+2025-05-17 00:12:27 +0300 1
+2025-05-16 17:15:03 +0300 add rknn toolkit
+2025-05-16 16:57:48 +0300 upd docker file
+2025-05-16 14:41:59 +0300 2
+2025-05-16 14:41:04 +0300 1
+2025-05-16 14:02:09 +0300 first commit
