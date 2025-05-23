@@ -6,21 +6,54 @@ from rknn.api import RKNN
 from tqdm import tqdm
 import pandas as pd
 from tabulate import tabulate
+from roboflow import Roboflow
+from dotenv import load_dotenv
+from sklearn.model_selection import train_test_split
 
-# Конфигурация
-TEST_IMAGE = '/app/img001.png'  # Путь к тестовому изображению
-NUM_RUNS = 100  # Количество прогонов для тестирования
-INPUT_SIZE = (640, 640)  # Размер входного изображения
+# === Configuration ===
+load_dotenv()
+ROBOFLOW_API_KEY   = os.getenv("ROBOFLOW_API_KEY")
+ROBOFLOW_WORKSPACE = os.getenv("ROBOFLOW_WORKSPACE")
+ROBOFLOW_PROJECT   = os.getenv("ROBOFLOW_PROJECT")
+ROBOFLOW_VERSION   = int(os.getenv("ROBOFLOW_VERSION", "1"))
+
+INPUT_SIZE = (640, 640)
+NUM_RUNS = 100
+DATASET_DIR = 'calib_images'
+VALID_TXT = 'dataset_valid.txt'
+
+def download_dataset():
+    """Download and prepare dataset from Roboflow"""
+    print("[INFO] Downloading dataset from Roboflow...")
+    rf = Roboflow(api_key=ROBOFLOW_API_KEY)
+    project = rf.workspace(ROBOFLOW_WORKSPACE).project(ROBOFLOW_PROJECT)
+    ds = project.version(ROBOFLOW_VERSION).download("yolov5")
+    
+    os.makedirs(DATASET_DIR, exist_ok=True)
+    imgs = []
+    for root, _, files in os.walk(ds.location):
+        for f in files:
+            if f.lower().endswith(('.jpg','jpeg','png')):
+                src = os.path.join(root,f)
+                dst = os.path.join(DATASET_DIR,f)
+                if not os.path.exists(dst):
+                    os.system(f'cp "{src}" "{dst}"')
+                imgs.append(os.path.abspath(dst))
+    
+    # Use 20% for validation
+    _, valid = train_test_split(imgs, train_size=0.8, random_state=42)
+    with open(VALID_TXT,'w') as fv: fv.write('\n'.join(valid))
+    print(f"[INFO] Dataset prepared. Validation set: {len(valid)} images")
+    return valid
 
 def load_model(model_path):
-    """Загрузка RKNN модели"""
+    """Load RKNN model"""
     rknn = RKNN()
     ret = rknn.load_rknn(model_path)
     if ret != 0:
         print(f'[ERROR] Load RKNN model failed: {ret}')
         return None
 
-    # Инициализация NPU
     print('--> Init runtime environment')
     ret = rknn.init_runtime(target='rk3588', device_id='npu0')
     if ret != 0:
@@ -29,84 +62,119 @@ def load_model(model_path):
 
     return rknn
 
-def preprocess_image(image_path, input_size=INPUT_SIZE):
-    """Предобработка изображения"""
+def preprocess_image(image_path):
+    """Preprocess image for inference"""
     img = cv2.imread(image_path)
     if img is None:
         print(f'[ERROR] Could not read image: {image_path}')
         return None
 
-    img = cv2.resize(img, input_size)
+    img = cv2.resize(img, INPUT_SIZE)
     img = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
     return img.astype(np.uint8)
 
-def run_inference(model, image, num_runs=NUM_RUNS):
-    """Запуск инференса и замер времени"""
+def extract_label_from_filename(path):
+    """Extract label from filename"""
+    for part in os.path.basename(path).split('_'):
+        if part.split('.')[0].isdigit():
+            return int(part.split('.')[0])
+    return 0
+
+def measure_inference_time(model, image, num_runs=NUM_RUNS):
+    """Measure inference time"""
     times = []
     
-    # Прогрев модели
+    # Warmup
     print("Warming up model...")
     for _ in range(10):
         model.inference(inputs=[image])
     
-    # Замер времени
+    # Measure time
     print(f"Running inference tests ({num_runs} runs)...")
     for _ in tqdm(range(num_runs), desc="Running inference"):
         start = time.time()
         outputs = model.inference(inputs=[image])
         end = time.time()
-        times.append((end - start) * 1000)  # в миллисекундах
+        times.append((end - start) * 1000)  # convert to ms
     
     return times
 
-def test_model(model_path, image, num_runs=NUM_RUNS):
-    """Тестирование одной модели"""
+def measure_accuracy(model, validation_images):
+    """Measure model accuracy on validation set"""
+    correct = 0
+    total = 0
+    
+    print("Measuring accuracy on validation set...")
+    for img_path in tqdm(validation_images, desc="Evaluating accuracy"):
+        img = preprocess_image(img_path)
+        if img is None:
+            continue
+            
+        out = model.inference(inputs=[img])[0]
+        pred = int(np.argmax(out))
+        lbl = extract_label_from_filename(img_path)
+        
+        correct += (pred == lbl)
+        total += 1
+    
+    return (correct / total * 100.0) if total > 0 else 0.0
+
+def test_model(model_path, validation_images):
+    """Test model performance"""
     print(f'\n[INFO] Testing model: {os.path.basename(model_path)}')
     
-    # Загрузка модели
+    # Load model
     model = load_model(model_path)
     if model is None:
         return None
 
-    # Запуск инференса
-    times = run_inference(model, image, num_runs)
+    # Get first image for timing test
+    test_image = preprocess_image(validation_images[0])
+    if test_image is None:
+        return None
+
+    # Measure inference time
+    times = measure_inference_time(model, test_image)
     
-    # Расчет статистики
+    # Measure accuracy
+    accuracy = measure_accuracy(model, validation_images)
+    
+    # Calculate statistics
     stats = {
         'Model': os.path.basename(model_path),
         'Avg Time (ms)': np.mean(times),
         'Std Dev (ms)': np.std(times),
         'Min Time (ms)': np.min(times),
         'Max Time (ms)': np.max(times),
-        'FPS': 1000/np.mean(times)
+        'FPS': 1000/np.mean(times),
+        'Accuracy (%)': accuracy
     }
     
-    # Очистка
+    # Cleanup
     model.release()
     return stats
 
 def main():
-    # Список моделей для тестирования
+    # List of models to test
     models = [
-        'model_fp16.rknn',
-        'model_int8.rknn',
-        'model_int4.rknn'
+        'v10nint8256_fp16.rknn',
+        'v10nint8256_int8.rknn'
     ]
 
-    # Загрузка и предобработка изображения
-    print(f'[INFO] Loading image: {TEST_IMAGE}')
-    image = preprocess_image(TEST_IMAGE)
-    if image is None:
+    # Download and prepare dataset
+    validation_images = download_dataset()
+    if not validation_images:
+        print("[ERROR] Failed to prepare dataset")
         return
 
-    # Тестирование всех моделей
+    # Test all models
     results = []
     for model_path in models:
         if not os.path.exists(model_path):
             print(f'[WARNING] Model {model_path} not found, skipping...')
             continue
             
-        stats = test_model(model_path, image, NUM_RUNS)
+        stats = test_model(model_path, validation_images)
         if stats:
             results.append(stats)
 
@@ -114,12 +182,12 @@ def main():
         print('[ERROR] No models were successfully tested')
         return
 
-    # Вывод результатов в виде таблицы
+    # Print results
     print('\n[RESULTS]')
     df = pd.DataFrame(results)
     print(tabulate(df, headers='keys', tablefmt='psql', floatfmt='.2f'))
 
-    # Сохранение результатов в CSV
+    # Save results
     csv_path = 'inference_results.csv'
     df.to_csv(csv_path, index=False)
     print(f'\n[INFO] Results saved to {csv_path}')
