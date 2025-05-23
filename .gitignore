@@ -1,2 +1,6 @@
 .env
 images/
+
+work_analysis.bash
+work_analysis.py
+work.txt
