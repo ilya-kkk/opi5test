@@ -1,3 +1,9 @@
+2025-05-24 01:07:13 +0300 Update Dockerfile to install ONNX and ONNX Graph Surgeon packages, and change the default command to run convert.py instead of infer_test.py.
+2025-05-24 00:31:47 +0300 Implement ONNX model cleaning functionality in convert.py. Added a new function to remove TopK and NMS nodes from the ONNX model before conversion to RKNN. Updated the conversion process to utilize the cleaned ONNX model.
+2025-05-24 00:09:12 +0300 Refactor model conversion process to include ONNX cleanup. Updated pt_convert.py to remove TopK and NMS nodes from the exported ONNX model. Changed ONNX model reference in convert.py to 'yolo_no_topk.onnx' and deleted obsolete ONNX files.
+2025-05-23 19:25:27 +0300 Update container name in docker-compose.yml from 'orangepi_rknn_runner' to 'onnx_to_rknn' for clarity and consistency.
+2025-05-23 18:56:49 +0300 new pipeline
+2025-05-23 18:05:15 +0300 Enhance inference testing framework in infer_test.py by adding output processing functionality. Introduced confidence and IoU thresholds for improved prediction accuracy. Updated model inference logic to handle processed outputs effectively.
 2025-05-23 17:45:08 +0300 Remove work_analysis.bash script as it is no longer needed for the project.
 2025-05-23 17:42:06 +0300 Add work_analysis.bash, work_analysis.py, and work.txt to .gitignore for improved file management
 2025-05-23 17:26:27 +0300 Rename rknn_inference service to rknn_runner in docker-compose.yml and update container name for consistency. Removed auto_remove option for simplified container management.
